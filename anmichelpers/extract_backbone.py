@@ -1,7 +1,7 @@
 import sys
-from prody import *
+import prody 
 
 pdb = sys.argv[1]
-backbone = parsePDB(pdb, subset='bb')
+backbone = prody.parsePDB(pdb, subset='bb')
 
-writePDB(pdb + '_backbone.pdb', backbone)
+prody.writePDB(pdb + '_backbone.pdb', backbone)

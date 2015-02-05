@@ -23,32 +23,7 @@ def read_file_ci(path):
 
     return lines
 
-def parse_eigenvectors_cc(path):
-    lines = read_file_cc(path)
-    modes = [[] for i in range(len(lines[0]))]
-
-    size = len(lines)
-    for i in range(0, size, 3):
-        x = lines[i]
-        y = lines[i+1]
-        z = lines[i+2]
-
-        for j in range(len(x)):
-            coords = [float(x[j]), float(y[j]), float(z[j])]
-            modes[j].append(coords)
-    return modes
-
-def parse_eigenvalues_cc(path):
-    ins = open(path, "r")
-    eigvalues = []
-
-    for line in ins:
-        line = line.split()
-        eigvalues.append(float(line[1]))
-    ins.close()
-
-    return eigvalues
-
+    
 def parse_imods(path, type):
     lines = read_file_ci(path)
     values = []
