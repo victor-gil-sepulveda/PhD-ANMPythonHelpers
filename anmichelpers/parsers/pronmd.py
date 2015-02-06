@@ -4,6 +4,8 @@ Created on Feb 6, 2015
 @author: victor
 """
 
+import prody
+
 class ProdyNMDParser(object):
     """
     (from http://www.ks.uiuc.edu/Research/vmd/plugins/nmwiz/ and 
@@ -28,5 +30,11 @@ class ProdyNMDParser(object):
     
     Note that all data types must be listed in a single line. The size of data lines must match the number of atoms in the system (the size of coordinates line).
     """
-    def __init__(self,  params):
-        pass
+    def __init__(self):
+        self.anm = None
+        self.atoms = None
+    
+    def read(self, nmd_file):
+        self.anm, self.atoms = prody.parseNMD(nmd_file)
+    
+        return self.anm.getEigvals(), self.anm.getEigvecs().T

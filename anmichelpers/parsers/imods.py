@@ -47,7 +47,7 @@ class ImodServerFilesParser(object):
             
             # skip ****
             current_line += 1
-        return eigenvalues, eigenvectors
+        return numpy.array(eigenvalues), numpy.array(eigenvectors)
     
     @classmethod        
     def __get_number_and_length_of_eigenvectors(self, file_lines):
