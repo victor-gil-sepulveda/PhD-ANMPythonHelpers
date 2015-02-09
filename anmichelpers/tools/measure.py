@@ -3,9 +3,9 @@ Created on 9/2/2015
 
 @author: victor
 """
-import  anmichelpers.tools.tools as tools
-from anmichelpers.tools.tools import ensure_mode_layout
+
 import numpy
+from anmichelpers.tools.tools import ensure_modes_layout
 
 def mean_square_fluctuations(eigenvalues, eigenvectors, number_of_nodes, prefactor = 1.8):
     """
@@ -16,9 +16,9 @@ def mean_square_fluctuations(eigenvalues, eigenvectors, number_of_nodes, prefact
     @param eigenvectors: Eigenvectors related to that eigenvalues (indeed eigenvectors of the 
     Kirchoff matrix).
     
-    @return: Per node square distance increment (mean square fluctuation) in sq Angstroms.
+    @return: Per node square distance increment (mean square fluctuation) in sq. Angstroms.
     """
-    ensure_mode_layout(eigenvectors)
+    eigenvectors = ensure_modes_layout(eigenvectors)
     
     nodes_msq = numpy.array([0.] * (number_of_nodes))
     for k in range(number_of_nodes):
@@ -27,5 +27,6 @@ def mean_square_fluctuations(eigenvalues, eigenvectors, number_of_nodes, prefact
             nodes_msq[k] += numpy.dot(mode[k], mode[k]) / eigenvalues[j]
     
     return nodes_msq
-    
-    
+
+def rmsf(coordsets):
+    pass

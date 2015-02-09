@@ -15,7 +15,15 @@ def norm(v):
     
     @return: A norm or an array of norms.
     """
-    return numpy.sqrt(numpy.dot(v,v))
+    if len(v.shape) == 1:
+        return numpy.sqrt(numpy.dot(v,v))
+    elif len(v.shape) == 2:
+        norms = []
+        for i in range(len(v)):
+            norms.append(norm(v[i]))
+        return norms
+    else:
+        return None
 
 def frec_from_eigenvalue(e_val):
     """
@@ -28,18 +36,20 @@ def frec_from_eigenvalue(e_val):
     """
     return e_val / (2*math.pi)
 
-def ensure_mode_layout(modes):
+def ensure_modes_layout(modes):
     """
     If the layout of the modes is flat, it converts it to a (M,N,3) layout.
     
-    @param modes: [In/Out] A numpy array containing the modes. 
+    @param modes: [In/Out] A numpy array containing all the modes. 
     
-    @return: The same numpy array with a (M,N,3) layout.
+    @return: The same numpy array with a (M,N,3) layout or (N,3) 
     """
     if len(modes.shape) == 3:
         return modes
-    else:
+    elif len(modes.shape) == 2:
         number_of_modes = len(modes)
         number_of_nodes = modes.shape[1] / 3
-        modes.resize((number_of_modes, number_of_nodes, 3))
-        return modes
+        return numpy.reshape(modes, (number_of_modes, number_of_nodes, 3))
+    else:
+        raise ValueError("The array has an unexpected size")
+        
