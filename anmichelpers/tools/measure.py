@@ -6,6 +6,7 @@ Created on 9/2/2015
 
 import numpy
 from anmichelpers.tools.tools import ensure_modes_layout
+from pyRMSD.RMSDCalculator import RMSDCalculator
 
 def mean_square_fluctuations(eigenvalues, eigenvectors, number_of_nodes, prefactor = 1.8):
     """
@@ -28,5 +29,29 @@ def mean_square_fluctuations(eigenvalues, eigenvectors, number_of_nodes, prefact
     
     return nodes_msq
 
-def rmsf(coordsets):
-    pass
+def rmsf(prody_pdb):
+    """
+    Calculates CA Root Mean Square Fluctuation.
+    
+    @param prody_pdb: A prody pdb data structure.
+    
+    @return: An array with the per-residue CA rmsf.
+    """
+    # Calculate the superposition
+    ca_coords = prody_pdb.select("name CA").getCoordsets()
+
+    calculator = RMSDCalculator(calculatorType = "QTRFIT_SERIAL_CALCULATOR",
+                                fittingCoordsets = ca_coords)
+    
+    calculator.iterativeSuperposition()
+    
+    # Calculate the actual rmsf
+    mean_conformation = ca_coords.mean(0)
+    
+    ssqf = numpy.zeros(mean_conformation.shape)
+
+    for conf in ca_coords:
+            ssqf += (conf - mean_conformation) ** 2
+            
+    return (ssqf.sum(1) / ca_coords.shape[0])**0.5
+

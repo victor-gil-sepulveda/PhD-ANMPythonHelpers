@@ -6,6 +6,9 @@ Created on 9/2/2015
 
 import  numpy
 import math
+import prody
+from pyproct.data.handler.sourceGenerator import SourceGenerator
+from pyproct.data.handler.protein.proteinEnsembleDataLoader import ProteinEnsembleDataLoader
 
 def norm(v):
     """
@@ -52,4 +55,59 @@ def ensure_modes_layout(modes):
         return numpy.reshape(modes, (number_of_modes, number_of_nodes, 3))
     else:
         raise ValueError("The array has an unexpected size")
+    
+def load_all_pdbs_ca(pdb_list):
+    """
+    Loads a list of pdbs in pyproct format (this includes the use of globs and 'base_selection'.
+    
+    @param pdb_list: A list of pdbs in pyproct format.
+    
+    @return: The pyproct data object and the list of sources (prody pdb structure -> data.structure_ensemble
+    source from pyproct source -> s.source["source"] )
+    """
+    class MockParams:
+        def __init__(self):
+            pass
+        def get_value(self,a,b):
+            return ""
+    sources = SourceGenerator(pdb_list).source_list
+    loader = ProteinEnsembleDataLoader(MockParams())
+    for source in sources:
+        loader.load(source)
+    # Retrieve the data object
+    data = loader.close()
+    return data, sources
+
+def get_all_betas(sources):
+    """
+    Loads CA temperature factors from a list of pyproct sources.
+    
+    @return: A matrix with all the beta factors.
+    """
+    betas = []
+    for s in sources:
+        pdb = prody.parsePDB(s.source["source"]).select("name CA")
+        betas.append(pdb.getBetas())
+    
+    betas = numpy.array(betas)
+    
+    mean_betas = betas.mean(axis = 0)
+    
+    for beta_array in betas:
+        for i in range(len(beta_array)):
+            if  beta_array[i] == 0.0:
+                print "Zero beta value @ %d; exchanging with mean."%i
+                beta_array[i] = mean_betas[i]
         
+    return betas
+
+def normalize(v):
+    max_val = max(v)
+    return v / abs(max_val)
+
+def normalize_zero_one(v):
+    max_val = max(v)
+    min_val = min(v)
+    val_range = max_val - min_val
+    return (v - min_val) / val_range
+
