@@ -3,7 +3,7 @@ Created on 10/2/2015
 
 @author: victor
 """
-from anmichelpers.tools.tools import load_all_pdbs_ca, get_all_betas, normalize,\
+from anmichelpers.tools.tools import load_all_pdbs_ca, get_all_betas, \
     normalize_zero_one
 from anmichelpers.tools.measure import rmsf
 import matplotlib.pyplot as plt

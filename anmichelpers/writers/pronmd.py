@@ -39,11 +39,15 @@ class ProdyNMDWriter(object):
         pass
     
     @classmethod
-    def write(cls, file_path, name, atoms, eigenvalues, eigenvectors, betas = None):
+    def write(cls, file_path, name, atoms, eigenvalues, eigenvectors, betas = None, center = False):
         nma = prody.dynamics.anm.ANM()
         nma.setEigens(eigenvectors.T, eigenvalues)
         
         atoms.setTitle(name)
+        
+        if center:
+            coordsets = atoms.getCoordsets()
+            coordsets -= numpy.mean(coordsets, axis=1)
         
         if betas is not None:
             atoms.setBetas(betas)
@@ -54,14 +58,26 @@ class ProdyNMDWriter(object):
             atoms.setBetas(prody.dynamics.analysis.calcTempFactors(nma, atoms))
         
         prody.dynamics.nmdfile.writeNMD(file_path, nma, atoms)
-        
-    @classmethod
-    def get_alpha_indices(cls, structure):
-        return numpy.where(structure.getNames() == "CA")
     
     @classmethod
-    def filter_eigvecs(cls,indices, evecs):
+    def write_CA(cls, file_path, name, atoms, eigenvalues, eigenvectors, betas = None, center = False):
+        indices = cls.get_alpha_indices(atoms)
+        filtered_eigenvectors = cls.filter_eigvecs(indices, eigenvectors)
+        cls.write(file_path, name, atoms.select("name CA").copy(), eigenvalues, filtered_eigenvectors, betas, center)
+    
+    @classmethod
+    def get_alpha_indices(cls, structure):
+        return numpy.where(structure.getNames() == "CA")[0]
+    
+    @classmethod
+    def filter_eigvecs(cls, indices, evecs):
+        print evecs
         new_evecs = []
         for evec in evecs:
-            new_evecs.append(evec[indices])
+            new_evec = []
+            for index in indices:
+                new_evec.append(evec[index*3])
+                new_evec.append(evec[index*3+1])
+                new_evec.append(evec[index*3+2])
+            new_evecs.append(new_evec)
         return numpy.array(new_evecs)
