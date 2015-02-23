@@ -19,7 +19,6 @@ class ImodServerFilesParser(object):
         
         TODO: Using streams and extracting functions would improve testability.
         """
-        
         eigenvalues = []
         eigenvectors = []
         

@@ -47,7 +47,5 @@ class BaharServerFilesParser(object):
         Reads a file containing eigenvectors (20) written in columns.
         """ 
         return numpy.loadtxt(eigenvectors_file_path).T[1:]
-    
-    
 
     

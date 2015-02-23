@@ -4,6 +4,7 @@ Created on Feb 6, 2015
 @author: victor
 """
 import prody
+import numpy
 
 class ProdyNMDWriter(object):
     """
@@ -54,4 +55,13 @@ class ProdyNMDWriter(object):
         
         prody.dynamics.nmdfile.writeNMD(file_path, nma, atoms)
         
-        
+    @classmethod
+    def get_alpha_indices(cls, structure):
+        return numpy.where(structure.getNames() == "CA")
+    
+    @classmethod
+    def filter_eigvecs(cls,indices, evecs):
+        new_evecs = []
+        for evec in evecs:
+            new_evecs.append(evec[indices])
+        return numpy.array(new_evecs)
