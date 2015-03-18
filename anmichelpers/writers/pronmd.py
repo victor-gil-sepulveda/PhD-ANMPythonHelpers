@@ -3,7 +3,6 @@ Created on Feb 6, 2015
 
 @author: victor
 """
-import prody
 import numpy
 
 class ProdyNMDWriter(object):
@@ -38,27 +37,39 @@ class ProdyNMDWriter(object):
     def __init__(self,  params):
         pass
     
+#    @classmethod
+#    def write(cls, file_path, name, atoms, eigenvalues, eigenvectors, betas = None, center = False):
+#        nma = prody.dynamics.anm.ANM()
+#        nma.setEigens(eigenvectors.T, eigenvalues)
+#        
+#        atoms.setTitle(name)
+#        
+#        if center:
+#            coordsets = atoms.getCoordsets()
+#            coordsets -= numpy.mean(coordsets, axis=1)
+#        
+#        if betas is not None:
+#            atoms.setBetas(betas)
+#        else:
+#            # new beta calculation is weighted by current (experimental)\
+#            # beta, so we initialize it to 1.
+#            atoms.setBetas([1.]*atoms.numAtoms()) 
+#            atoms.setBetas(prody.dynamics.analysis.calcTempFactors(nma, atoms))
+#        
+#        prody.dynamics.nmdfile.writeNMD(file_path, nma, atoms)
+#    
     @classmethod
-    def write(cls, file_path, name, atoms, eigenvalues, eigenvectors, betas = None, center = False):
-        nma = prody.dynamics.anm.ANM()
-        nma.setEigens(eigenvectors.T, eigenvalues)
+    def write(cls, name, eigenvalues, eigenvectors, header = None):
+        handler = open(name+".nmd","w")
+        for tag in header:
+            if tag in ["name", "type",]:
+                handler.write("%s %s\n"%(tag, header[tag]))
+            else:
+                handler.write("%s %s\n"%(tag, " ".join([str(h) for h in header[tag]])))
         
-        atoms.setTitle(name)
-        
-        if center:
-            coordsets = atoms.getCoordsets()
-            coordsets -= numpy.mean(coordsets, axis=1)
-        
-        if betas is not None:
-            atoms.setBetas(betas)
-        else:
-            # new beta calculation is weighted by current (experimental)\
-            # beta, so we initialize it to 1.
-            atoms.setBetas([1.]*atoms.numAtoms()) 
-            atoms.setBetas(prody.dynamics.analysis.calcTempFactors(nma, atoms))
-        
-        prody.dynamics.nmdfile.writeNMD(file_path, nma, atoms)
-    
+        for i in range(len(eigenvalues)):
+            handler.write("mode %s %s\n"%(eigenvalues[i], " ".join([str(e) for e in eigenvectors[i]])))
+
     @classmethod
     def write_CA(cls, file_path, name, atoms, eigenvalues, eigenvectors, betas = None, center = False):
         indices = cls.get_alpha_indices(atoms)

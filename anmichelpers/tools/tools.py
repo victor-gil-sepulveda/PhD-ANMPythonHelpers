@@ -7,9 +7,12 @@ Created on 9/2/2015
 import  numpy
 import math
 import prody
-from pyproct.data.handler.sourceGenerator import SourceGenerator
-from pyproct.data.handler.protein.proteinEnsembleDataLoader import ProteinEnsembleDataLoader
-
+try:
+    from pyproct.data.handler.sourceGenerator import SourceGenerator
+    from pyproct.data.handler.protein.proteinEnsembleDataLoader import ProteinEnsembleDataLoader
+except:
+    print "[WARNING] pyProCT was not found. Some functions cannot be used"
+    
 def norm(v):
     """
     Numpy compliant norm implementation.
@@ -110,4 +113,11 @@ def normalize_zero_one(v):
     min_val = min(v)
     val_range = max_val - min_val
     return (v - min_val) / val_range
+
+def is_int(this_str):
+    try:
+        int(this_str)
+        return True
+    except ValueError:
+        return False
 

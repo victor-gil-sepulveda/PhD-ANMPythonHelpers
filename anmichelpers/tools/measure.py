@@ -6,7 +6,11 @@ Created on 9/2/2015
 
 import numpy
 from anmichelpers.tools.tools import ensure_modes_layout
-from pyRMSD.RMSDCalculator import RMSDCalculator
+try:
+    from pyRMSD.RMSDCalculator import RMSDCalculator
+except:
+    print "[WARNING] pyRMSD was not found. Some functions cannot be used"
+    
 
 def mean_square_fluctuations(eigenvalues, eigenvectors, number_of_nodes, prefactor = 1.8):
     """
