@@ -6,6 +6,7 @@ Created on 9/2/2015
 
 import numpy
 from anmichelpers.tools.tools import ensure_modes_layout
+import math
 try:
     from pyRMSD.RMSDCalculator import RMSDCalculator
 except:
@@ -58,4 +59,40 @@ def rmsf(prody_pdb):
             ssqf += (conf - mean_conformation) ** 2
             
     return (ssqf.sum(1) / ca_coords.shape[0])**0.5
+
+def calculate_angle(v1, v2):
+    norm_v1 = math.sqrt(numpy.dot(v1,v1))
+    norm_v2 = math.sqrt(numpy.dot(v2,v2))
+    
+    return math.acos(numpy.dot(v1,v2)/(norm_v1*norm_v2))
+
+def calculate_mode_angles(mode1,mode2):
+    mode1_3t = numpy.resize(mode1, (len(mode1)/3, 3))
+    mode2_3t = numpy.resize(mode2, (len(mode2)/3, 3))
+    
+    assert len(mode1_3t) == len(mode2_3t),\
+     "[ERROR] calculate_mode_angles - mode lengths must be equal (%s vs %s)."%(str(mode1_3t.shape), str(mode2_3t.shape))
+    
+    angles_1 = []
+    for i in range(len(mode1_3t)):
+        angles_1.append(calculate_angle(mode1_3t[i], mode2_3t[i]))
+    
+    angles_2 = []
+    mode2_3t *= -1
+    for i in range(len(mode1_3t)):
+        angles_2.append(calculate_angle(mode1_3t[i], mode2_3t[i]))
+        
+    if numpy.sum(angles_1) > numpy.sum(angles_2):
+        return numpy.array(angles_2)
+    else:
+        return numpy.array(angles_1)
+    
+def calculate_mode_magnitudes(mode):
+    mode_3t = numpy.resize(mode, (len(mode)/3, 3))
+    
+    magnitudes = []
+    for v in mode_3t:
+        magnitudes.append(math.sqrt(numpy.dot(v,v)))
+    
+    return numpy.array(magnitudes)
 

@@ -92,7 +92,6 @@ if __name__ == '__main__':
                 old_atom_mode = mode_map[atom]
                 new_mode.extend(old_atom_mode)
             except:
-                print "Atom not found: ", atom.name, atom.resid
                 # If not found we have to decide how to fill it    
                 if options.filling_method == "PROPAGATE_CA":
                     ca_mode_v = mode_map[Atom("CA",atom.resid)].mode_v
@@ -101,6 +100,10 @@ if __name__ == '__main__':
                     new_mode.extend([0.,0.,0.])
         
         new_eigenvectors.append(new_mode)
-
+    new_eigenvectors = numpy.array(new_eigenvectors)
+    
     # Write it
     ProdyNMDWriter.write(name, eigenvalues, new_eigenvectors, new_header)
+    numpy.savetxt(name+".values", eigenvalues)
+    numpy.savetxt(name+".vectors", new_eigenvectors)
+    
