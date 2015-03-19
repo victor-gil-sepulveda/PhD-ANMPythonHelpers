@@ -18,6 +18,9 @@ if __name__ == '__main__':
     _, eigenvectors1, header1 = ProdyNMDParser.read(options.input1)
     _, eigenvectors2, header2 = ProdyNMDParser.read(options.input2)
     
+    assert options.to >= options._from,  "[ERROR] 'from' value is bigger than 'to'. "
+    assert eigenvectors1.shape == eigenvectors2.shape,  "[ERROR] eigenvectors must share the same shape(1: %s,2: %s)."%(str(eigenvectors1.shape),str(eigenvectors2.shape))
+    
     for i in range(len(eigenvectors1)):
         if i >= options._from and i<= options.to:
             mode1 = eigenvectors1[i]
