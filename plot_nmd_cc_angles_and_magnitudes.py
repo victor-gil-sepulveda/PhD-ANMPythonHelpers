@@ -1,12 +1,14 @@
-'''
+"""
 Created on 18/03/2015
 
 @author: vgil
-'''
+"""
+
 from optparse import OptionParser
 import matplotlib.pyplot as plt
 from anmichelpers.parsers.pronmd import ProdyNMDParser
 import anmichelpers.tools.measure as measure
+
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--i1", dest="input1")

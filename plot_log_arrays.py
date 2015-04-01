@@ -6,6 +6,15 @@ Created on 19/03/2015
 import numpy
 from optparse import OptionParser
 import matplotlib.pyplot as plt
+import anmichelpers.tools.measure as measure
+from xdg.Menu import tmp
+
+def load_file(path):
+    v = numpy.loadtxt(path)
+    if len(v.shape) == 1:
+        return numpy.array([v])
+    else:
+        return v
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -18,27 +27,41 @@ if __name__ == '__main__':
     
     (options, args) = parser.parse_args()
     
-    plot_types = ["absdiff", "diff", "normal"]
+    plot_types = ["ccdist", "absdiff", "diff", "normal"]
     assert options.to >= options._from,  "[ERROR] 'from' value is bigger than 'to'. "
     assert options.plot_type in plot_types, "[ERROR] plot type ('-p','--plot_type') must be one of %s"%str(plot_types)
 
     result = None
     if options.plot_type == "diff" or options.plot_type == "absdiff":
-        v1 = numpy.loadtxt(options.input1)
-        v2 = numpy.loadtxt(options.input2)
+        v1 = load_file(options.input1)
+        v2 = load_file(options.input2)
         assert len(v1[0]) == len(v2[0]),"[ERROR] arrays must have the same length (%s vs %s)."
         #can have different number of rows
         if len(v1) != len(v2):
             min_c = min(len(v1),len(v2))
             v1 = v1[:min_c,:]
             v2 = v2[:min_c,:]
-        
         result = v2-v1
         if options.plot_type == "absdiff":
             result = abs(result)
         
+    if options.plot_type == "ccdist":
+        v1 = load_file(options.input1)
+        v2 = load_file(options.input2)
+        assert len(v1[0]) == len(v2[0]),"[ERROR] arrays must have the same length (%s vs %s)."
+        if len(v1) != len(v2):
+            min_c = min(len(v1),len(v2))
+            v1 = v1[:min_c,:]
+            v2 = v2[:min_c,:]
+            
+        result = v2-v1
+        tmp_result = []
+        for r in result:
+            tmp_result.append(measure.calculate_mode_magnitudes(r))
+        result = numpy.array(tmp_result)
+        
     elif options.plot_type == "normal":
-        result = numpy.loadtxt(options.input1)
+        result = load_file(options.input1)
 
     if options.skip_step:
         # skip first number

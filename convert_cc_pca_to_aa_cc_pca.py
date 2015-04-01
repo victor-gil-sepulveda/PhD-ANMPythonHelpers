@@ -94,7 +94,7 @@ if __name__ == '__main__':
             except:
                 # If not found we have to decide how to fill it    
                 if options.filling_method == "PROPAGATE_CA":
-                    ca_mode_v = mode_map[Atom("CA",atom.resid)].mode_v
+                    ca_mode_v = mode_map[Atom("CA",atom.resid)]
                     new_mode.extend(ca_mode_v)
                 elif options.filling_method == "ZEROS":
                     new_mode.extend([0.,0.,0.])
