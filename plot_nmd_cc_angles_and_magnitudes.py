@@ -33,7 +33,7 @@ if __name__ == '__main__':
             
             plt.title('----')
             ax = plt.subplot2grid((4, 1), (0,0), rowspan = 2)
-            plt.plot(angles, magnitudes1, 'r+')
+            plt.plot(angles, magnitudes1, 'r.')
             ax.set_ylabel("Magnitude")
             ax.set_xlabel("Angles")
             
