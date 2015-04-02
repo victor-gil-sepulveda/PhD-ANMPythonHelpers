@@ -36,28 +36,7 @@ class ProdyNMDWriter(object):
     
     def __init__(self,  params):
         pass
-    
-#    @classmethod
-#    def write(cls, file_path, name, atoms, eigenvalues, eigenvectors, betas = None, center = False):
-#        nma = prody.dynamics.anm.ANM()
-#        nma.setEigens(eigenvectors.T, eigenvalues)
-#        
-#        atoms.setTitle(name)
-#        
-#        if center:
-#            coordsets = atoms.getCoordsets()
-#            coordsets -= numpy.mean(coordsets, axis=1)
-#        
-#        if betas is not None:
-#            atoms.setBetas(betas)
-#        else:
-#            # new beta calculation is weighted by current (experimental)\
-#            # beta, so we initialize it to 1.
-#            atoms.setBetas([1.]*atoms.numAtoms()) 
-#            atoms.setBetas(prody.dynamics.analysis.calcTempFactors(nma, atoms))
-#        
-#        prody.dynamics.nmdfile.writeNMD(file_path, nma, atoms)
-#    
+
     @classmethod
     def write(cls, name, eigenvalues, eigenvectors, header = None):
         handler = open(name+".nmd","w")

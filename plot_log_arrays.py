@@ -29,6 +29,14 @@ def needs_two_files(i1, i2):
     needs_one_file(i2)
     return load_file(i1), load_file(i2)
 
+def can_have_different_numberof_rows(v1, v2):
+    #can have different number of rows
+    if len(v1) != len(v2):
+        min_c = min(len(v1),len(v2))
+        v1 = v1[:min_c,:]
+        v2 = v2[:min_c,:]
+    return v1, v2
+
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--i1", dest="input1")
@@ -50,11 +58,8 @@ if __name__ == '__main__':
         
         assert len(v1[0]) == len(v2[0]),"[ERROR] arrays must have the same length (%s vs %s)."
         
-        #can have different number of rows
-        if len(v1) != len(v2):
-            min_c = min(len(v1),len(v2))
-            v1 = v1[:min_c,:]
-            v2 = v2[:min_c,:]
+        v1,v2 = can_have_different_numberof_rows(v1, v2)
+        
         result = v2-v1
         
         if options.plot_type == "absdiff":
@@ -86,6 +91,8 @@ if __name__ == '__main__':
     if options.plot_type == "rmsd":
         v1,v2 = needs_two_files(options.input1, options.input2)
         v1,v2 = v1[:,1:], v2[:,1:]
+        v1,v2 = can_have_different_numberof_rows(v1, v2)
+        
         result = []
         for i in range(len(v1)):
             coordset1 = numpy.resize(v1[i], (len(v1[i])/3,3))

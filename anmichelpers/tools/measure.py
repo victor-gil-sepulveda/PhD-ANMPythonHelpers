@@ -82,7 +82,7 @@ def calculate_mode_angles(mode1,mode2):
     for i in range(len(mode1_3t)):
         angles_2.append(calculate_angle(mode1_3t[i], mode2_3t[i]))
         
-    if numpy.sum(angles_1) > numpy.sum(angles_2):
+    if abs(numpy.sum(angles_1)) > abs(numpy.sum(angles_2)):
         return numpy.array(angles_2)
     else:
         return numpy.array(angles_1)

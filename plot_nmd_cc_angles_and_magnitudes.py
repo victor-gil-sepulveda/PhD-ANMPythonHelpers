@@ -8,6 +8,7 @@ from optparse import OptionParser
 import matplotlib.pyplot as plt
 from anmichelpers.parsers.pronmd import ProdyNMDParser
 import anmichelpers.tools.measure as measure
+from anmichelpers.tools.tools import normalize
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -15,6 +16,7 @@ if __name__ == '__main__':
     parser.add_option("--i2", dest="input2")
     parser.add_option("-f","--from", type= "int", dest="_from")
     parser.add_option("-t","--to", type= "int", dest="to")
+    parser.add_option("-s",action= "store_true", default=False, dest="score")
     (options, args) = parser.parse_args()
 
     _, eigenvectors1, header1 = ProdyNMDParser.read(options.input1)
@@ -30,21 +32,31 @@ if __name__ == '__main__':
             angles = measure.calculate_mode_angles(mode1, mode2)
             magnitudes1 = measure.calculate_mode_magnitudes(mode1)
             magnitudes2 = measure.calculate_mode_magnitudes(mode2)
-            
-            plt.title('----')
-            ax = plt.subplot2grid((4, 1), (0,0), rowspan = 2)
-            plt.plot(angles, magnitudes1, 'r.')
-            ax.set_ylabel("Magnitude")
-            ax.set_xlabel("Angles")
-            
-            plt.subplot2grid((4, 1), (2,0))
-            plt.plot(range(len(magnitudes1)), magnitudes1, 'y.-')
-            plt.ylabel('Magnitude')
-            plt.xlabel('Residue ID')
-            
-            plt.subplot2grid((4, 1), (3,0))
-            plt.plot(range(len(magnitudes2)), magnitudes2, 'g.-')
-            plt.ylabel('Magnitude')
-            plt.xlabel('Residue ID')
-            
-            plt.show()
+            if not options.score:
+                plt.title('----')
+                ax = plt.subplot2grid((4, 1), (0,0), rowspan = 2)
+                plt.plot(angles, magnitudes1, 'r.')
+                ax.set_ylabel("Magnitude")
+                ax.set_xlabel("Angles")
+                
+                plt.subplot2grid((4, 1), (2,0))
+                plt.plot(range(len(magnitudes1)), magnitudes1, 'y.-')
+                plt.ylabel('Magnitude')
+                plt.xlabel('Residue ID')
+                
+                plt.subplot2grid((4, 1), (3,0))
+                plt.plot(range(len(magnitudes2)), magnitudes2, 'g.-')
+                plt.ylabel('Magnitude')
+                plt.xlabel('Residue ID')
+                
+                plt.show()
+            else:
+                """
+                Perform the scoring of this guys (mean error of the normalized magnitudes and
+                mean angle error weighted by its correct magnitude value )
+                """
+                norm_magnitudes1 = normalize(magnitudes1)
+                norm_magnitudes2 = normalize(magnitudes2)
+                ang_error = (norm_magnitudes1*angles).sum() / len(angles)
+                print ang_error
+                
