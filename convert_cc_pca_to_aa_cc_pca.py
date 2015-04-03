@@ -9,6 +9,8 @@ from optparse import OptionParser
 from anmichelpers.writers.pronmd import ProdyNMDWriter
 import os
 import math
+from anmichelpers.tools.atoms import Atom
+from anmichelpers.tools.tools import find
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -113,7 +115,6 @@ if __name__ == '__main__':
                     old_atom_mode = alt_mode_map[atom]
                     new_mode.extend(old_atom_mode)
                 except:
-                    print "Not found ", atom.name, atom.resid
                     # If not found we have to decide how to fill it    
                     if options.filling_method == "PROPAGATE_CA":
                         """

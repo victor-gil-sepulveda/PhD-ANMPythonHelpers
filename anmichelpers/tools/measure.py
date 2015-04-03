@@ -64,15 +64,21 @@ def calculate_angle(v1, v2):
     norm_v1 = math.sqrt(numpy.dot(v1,v1))
     norm_v2 = math.sqrt(numpy.dot(v2,v2))
     
-    return math.acos(numpy.dot(v1,v2)/(norm_v1*norm_v2))
+    _cos =  numpy.dot(v1,v2)/(norm_v1*norm_v2)
+    
+    if _cos > 1: _cos = 1
+    if _cos < -1: _cos = -1
+    
+    return math.acos(_cos)
 
 def calculate_mode_angles(mode1,mode2):
     mode1_3t = numpy.resize(mode1, (len(mode1)/3, 3))
     mode2_3t = numpy.resize(mode2, (len(mode2)/3, 3))
-    
     assert len(mode1_3t) == len(mode2_3t),\
      "[ERROR] calculate_mode_angles - mode lengths must be equal (%s vs %s)."%(str(mode1_3t.shape), str(mode2_3t.shape))
-    
+#    numpy.savetxt("mode1.txt", mode1_3t)
+#    numpy.savetxt("mode2.txt", mode1_3t)
+    print len(mode1_3t)
     angles_1 = []
     for i in range(len(mode1_3t)):
         angles_1.append(calculate_angle(mode1_3t[i], mode2_3t[i]))

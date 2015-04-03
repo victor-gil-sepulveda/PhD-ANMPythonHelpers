@@ -1,13 +1,12 @@
 import os
 import sys
-import numpy
 import prody
 from optparse import OptionParser
 from anmichelpers.parsers.imods import ImodServerFilesParser
 from anmichelpers.parsers.bahar import BaharServerFilesParser
 from anmichelpers.writers.pronmd import ProdyNMDWriter
 from anmichelpers.parsers.pronmd import ProdyNMDParser
-from anmichelpers.tools.atoms import atoms_from_header, get_CA_atoms
+from anmichelpers.tools.atoms import  get_CA_modes
 
 if __name__ == "__main__":
 
@@ -43,8 +42,8 @@ if __name__ == "__main__":
         print "I don't know how to convert this file."
         sys.exit()
     
-    new_header = {}
     if extension != ".nmd":
+        new_header = {}
         # Get a new header from the structural info
         structure = prody.proteins.pdbfile.parsePDB(options.protein_path)
         header["name"] = options.input
@@ -59,24 +58,10 @@ if __name__ == "__main__":
         header["resnames"] = structure.getResnames()
         header["resids"] = structure.getResindices()
         
-    final_evecs = eigenvectors
     if options.ca_only:
-        # Get only the CAs
-        atoms = atoms_from_header(header, eigenvectors)
-        ca_atoms = get_CA_atoms(atoms)
-        # remount eigenvalues and header
-        new_header = {
-                      "atomnames":[],
-                      "resids":[],
-                      "coordinates":[]
-                      }
-        new_modes = []
-        for ca in ca_atoms:
-            new_header["atomnames"].append("CA")
-            new_header["resids"].append(ca.resid)
-            new_header["coordinates"].extend(ca.coords)
-            new_modes.append(ca.mode_v)
-        
-        final_evecs = numpy.array(new_modes).T
-        
-    ProdyNMDWriter.write(options.output, eigenvalues, final_evecs, header)
+        new_header, final_evecs = get_CA_modes(header, eigenvectors)
+    else:
+        final_evecs = eigenvectors
+        new_header = header
+            
+    ProdyNMDWriter.write(options.output, eigenvalues, final_evecs, new_header)
