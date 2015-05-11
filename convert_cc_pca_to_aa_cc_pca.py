@@ -24,7 +24,8 @@ if __name__ == '__main__':
 
     filling_methods = ["ZEROS","PROPAGATE_CA", "PROPAGATE_CA_TURN"]
     assert options.filling_method in filling_methods,\
-     "[ERROR] The filling method can only be one of these %s"%(str(filling_methods))
+     "[ERROR] The filling method (%s) must be one of these %s"%(options.filling_method,
+                                                                str(filling_methods))
 
     # Parse ordered atoms
     handler = open(options.atom_order_file)

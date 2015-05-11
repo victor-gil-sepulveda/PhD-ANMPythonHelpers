@@ -102,3 +102,29 @@ def calculate_mode_magnitudes(mode):
     
     return numpy.array(magnitudes)
 
+
+def to_0_2PI_range(angle):
+    if(angle >= 0):
+        return angle; 
+    else:
+        return (2*math.pi)+angle;
+
+def angle_diff(angle1, angle2):
+    new_a = to_0_2PI_range(angle1)
+    new_b = to_0_2PI_range(angle2)
+    difference = new_a - new_b
+
+    if difference > math.pi:
+        return difference-(2*math.pi) 
+
+    if difference < -math.pi:
+        return  difference + (2*math.pi) 
+
+    return difference
+
+def calculate_angle_differences(angle_v1, angle_v2):
+    angle_differences = []
+    for i in range(len(angle_v1)):
+        angle_differences.append(angle_diff(angle_v1[i], angle_v2[i])) 
+    return angle_differences
+
