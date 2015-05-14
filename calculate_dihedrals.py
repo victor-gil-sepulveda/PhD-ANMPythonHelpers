@@ -10,6 +10,10 @@ from prody.measure.measure import calcPsi, calcPhi, calcOmega
 from prody.proteins.pdbfile import parsePDB
 
 def get_dihedrals_for_conformation(conformation):
+    """
+    Gets the dihedrals we need for the coarse grain model we are using (prolines count
+    as only one unit).
+    """
     dihedral_angles = []
     for residue in conformation.iterResidues():
         if residue.getResname() != "PRO":
@@ -24,6 +28,9 @@ def get_dihedrals_for_conformation(conformation):
     return numpy.array(dihedral_angles[1:-1])
 
 def get_omegas_for_conformation(conformation):
+    """
+    Calculates all omega angles.
+    """
     omega_angles = []
     for residue in conformation.iterResidues():
         try:

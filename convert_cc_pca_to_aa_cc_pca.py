@@ -43,7 +43,7 @@ if __name__ == '__main__':
     eigenvalues, eigenvectors, header = ProdyNMDParser.read(options.input)
     assert "resids" in header, '[ERROR] The "resids" tag is not present into the nmd input file'
     assert "atomnames" in header, '[ERROR] The "atomnames" tag is not present into the nmd input file'
-    assert len(eigenvectors[0]) == len(header["resids"])*3, '[ERROR] "mode" and "resids" do not have compatible sizes'
+    assert len(eigenvectors[0]) == len(header["resids"])*3, '[ERROR] "mode" and "resids" do not have compatible sizes (%d vs %d)'%(len(eigenvectors[0]), len(header["resids"])*3)
     assert len(eigenvectors[0]) == len(header["atomnames"])*3, '[ERROR] "mode" and "atomnames" do not have compatible sizes'
     
     for i in range(len(header["resids"])):
