@@ -26,9 +26,9 @@ class TMAlign:
             res2 = int(parts[2].split(":")[0])
             mapping[res1] = res2
             
-#        filelist = glob.glob("*.sup*")
-#        for f in filelist:
-#            os.remove(f)
+        filelist = glob.glob("*.sup*")
+        for f in filelist:
+            os.remove(f)
         
         return mapping
         
