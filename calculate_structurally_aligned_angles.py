@@ -27,6 +27,14 @@ def get_residue_angles(residue):
 def add_angles(phi, psi, angles):
     angles.extend([phi,psi])
 
+def get_residue(pdb, res_id):
+    residue_struct = pdb.select("resid %d"%res_id).copy()
+    i = 0
+    for residue in residue_struct.iterResidues():
+        i+=1
+    assert i == 1, "[ERROR] resid %d selection returns more than one residues (%d)"%(res_id,i)
+    return residue
+
 def add_single_residue_angles(pdb, res_id, angles):
     residue_struct = pdb.select("resid %d"%res_id).copy()
     i = 0
@@ -45,7 +53,6 @@ if __name__ == '__main__':
     parser.add_option("-f", dest="from_res", type="int")
     parser.add_option("-t", dest="to_res", type="int")
     (options, args) = parser.parse_args()
-    
     
     sequences = []
     all_angles = []
@@ -74,13 +81,18 @@ if __name__ == '__main__':
         for r_id in range(options.from_res, options.to_res+1):
             try:
                 res_selection.append(res_mapping[r_id])
-                residue = add_single_residue_angles(pdb, res_mapping[r_id], angles)               
+                residue = get_residue(pdb, res_mapping[r_id])               
                 resname = residue.getResname()
+                # Get the real residue (not a copy)
+                real_residue = pdb.getHierView().getResidue(residue.getChain(), residue.getResnum())
                 residue.setResnum(r_id)
             except KeyError:
                 print "Correspondence not found for residue %d of template in pdb %s"%(r_id, pdb_path)
+                # Only reason to not to have a residue mapped is that it is not present
+                # in the target pdb file (as it is mandatory that there are  no gaps
+                # in the reference structure).
                 resname = "GAP"
-                angles.extend([inf,inf])
+                # angles.extend([inf,inf])
                 
             sequence.append(resname)
         sequences.append(sequence)
@@ -90,15 +102,15 @@ if __name__ == '__main__':
         all_angles.append(angles)
         
     # Save the angles    
-    angle_modes = stats.mode(angles)
-    for i in range(len(sequences)):
-        sequence = sequences[i]
-        for j in range(len(sequence)):
-            res = sequence[j]
-            if res == "GAP":
-                all_angles[i][j*2] = angle_modes[j*2]
-                all_angles[i][(j*2)+1] = angle_modes[(j*2)+1]
-    open("%s.angles"%(options.output),"w").write("\n".join([",".join([str(a) for a in angles]) for angles in all_angles]))
+#    angle_modes = stats.mode(angles)
+#    for i in range(len(sequences)):
+#        sequence = sequences[i]
+#        for j in range(len(sequence)):
+#            res = sequence[j]
+#            if res == "GAP":
+#                all_angles[i][j*2] = angle_modes[j*2]
+#                all_angles[i][(j*2)+1] = angle_modes[(j*2)+1]
+#    open("%s.angles"%(options.output),"w").write("\n".join([",".join([str(a) for a in angles]) for angles in all_angles]))
     
     # Write the sequences
     
