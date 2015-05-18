@@ -21,9 +21,11 @@ class GeoPCA(object):
 
         eigenvectors = []
         for line in file_lines[2:]:
+            eigenvector = []
             parts = line.split(",")
             for part in parts:
-                eigenvectors.append((float(part) * 180.)/math.pi )
+                eigenvector.append((float(part) * math.pi)/ 180. )
+            eigenvectors.append(eigenvector)
         return numpy.array(eigenvalues), numpy.array(eigenvectors).T
             
-print GeoPCA.load("geoPCA.out")
+#print GeoPCA.load("geoPCA.out")
