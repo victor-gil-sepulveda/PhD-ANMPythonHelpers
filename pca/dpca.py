@@ -52,14 +52,13 @@ def shift_all_above(angles, min_dens_val):
 def covariance_matrix(data, d_mean):
     """
     Calculates the 'variance-covariance' matrix for a data set of the type:
-    [[observation1],
-    [observation 2],
+    [[struct 1 angles],
+    [struct 2 angles],
     ...
-    [observation n]]
+    [struct n angles]]
     """
-    num_variables = len(data)
     X = data - d_mean
-    return numpy.dot(X.T, X.conj()) / (num_variables-1)
+    return numpy.dot(X.T, X.conj()) / (len(data)-1)
             
 class dPCA:
     def __init__(self):
@@ -77,22 +76,23 @@ class dPCA:
         Calculates the direct dPCA of the dihedrals.
         """
         new_angles = []
-        
+        mean_angles = []
         # Shift all angles in order to avoid having them in boundaries
         for angle_observations in angles.T:
             phi_0 =  min_density_angle(angle_observations)
-            new_angles.append(shift_all_above(angle_observations, phi_0))
-        
-        # Calculate the circular mean for each of the dihedrals
-        mean_vector = [circular_mean(a) for a in angle_observations.T]
+            shifted_angles = shift_all_above(angle_observations, phi_0)
+            new_angles.append(shifted_angles)
+            mean_angles.append(circular_mean(shifted_angles))
         
         # Calculate the covariance matrix
-        cov = covariance_matrix(angles, mean_vector)
+        cov = covariance_matrix(numpy.array(new_angles).T, 
+                                numpy.array(mean_angles))
         
         # Calculate the components
+        # TODO! Order is not guaranteed.  Order the eigenvectors by eigenvalue!
         w, v = numpy.linalg.eig(cov)
         
-        return w, v.T
+        return w[0:10].astype(float), v[:, 0:10].T.astype(float)
         
         
             
