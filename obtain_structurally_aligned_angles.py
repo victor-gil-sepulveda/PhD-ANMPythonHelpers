@@ -40,6 +40,23 @@ def add_single_residue_angles(residue, angles):
     phi, psi = get_residue_angles(residue)
     add_angles(phi, psi, angles)
 
+def get_reference_structure(path, selection_str, expected_num_res):
+    reference = parsePDB(path)
+    reference_structure = reference.select(selection_str)
+    writePDB("ref.pdb.chunk", reference_structure)
+    #The reference chunk must NOT have RESIDUE GAPS
+    assert expected_num_res == reference_structure.getHierView().numResidues(),\
+    "[ERROR] There are gaps in the reference structure inside this residue range.%d %d"%(options.to_res - options.from_res +1, reference_structure.getHierView().numResidues())
+
+def get_best_res_mapping(reference_path, target_path):
+    res_mapping_1 = MICAN().run(reference_path, target_path)
+    res_mapping_2 = TMAlign().run(reference_path, target_path)
+    
+    # We get the one that got more residues aligned
+    (_, res_mapping) = max((len(res_mapping_1.keys()), res_mapping_1),
+                                 (len(res_mapping_2.keys()), res_mapping_2))
+    return res_mapping
+
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--ref", dest="reference")
@@ -52,22 +69,15 @@ if __name__ == '__main__':
     sequences = []
     all_angles = []
     
-    reference = parsePDB(options.reference)
-    reference_structure = reference.select("resid "+" ".join([str(i) for i in range(options.from_res, options.to_res+1)]))
-    writePDB("ref.pdb.chunk", reference_structure)
-    #The reference chunk must NOT have RESIDUE GAPS
-    assert options.to_res - options.from_res +1 == reference_structure.getHierView().numResidues(),\
-    "[ERROR] There are gaps in the reference structure inside this residue range.%d %d"%(options.to_res - options.from_res +1, reference_structure.getHierView().numResidues())
+    reference_structure = get_reference_structure(options.reference, 
+                                        "resid "+" ".join([str(i) for i in range(options.from_res, options.to_res+1)]),
+                                        options.to_res - options.from_res +1)
     
     for pdb_path in open(options.db_list).readlines():
         sequence = []
         pdb_path = pdb_path.rstrip('\r\n')
-        res_mapping_1 = MICAN().run(options.reference, pdb_path)
-        res_mapping_2 = TMAlign().run(options.reference, pdb_path)
         
-        # We get the one that got more residues aligned
-        (key_len, res_mapping) = max((len(res_mapping_1.keys()), res_mapping_1),
-                                     (len(res_mapping_2.keys()), res_mapping_2))
+        res_mapping = get_best_res_mapping(options.reference, pdb_path)
         
         pdb = parsePDB(pdb_path)
         res_selection = []
@@ -108,8 +118,8 @@ if __name__ == '__main__':
             if res == "GAP":
                 all_angles[i][j*2] = angle_modes[j*2]
                 all_angles[i][(j*2)+1] = angle_modes[(j*2)+1]
-    open("%s.angles"%(options.output),"w").write("\n".join([",".join([str(a) for a in angles]) for angles in numpy.array(all_angles).T]))
     
+    open("%s.angles"%(options.output),"w").write("\n".join([",".join([str(a) for a in angles]) for angles in numpy.array(all_angles).T]))
     # Write the sequences
     open("%s.seq"%(options.output),"w").write("\n".join([" ".join(sequence) for sequence in sequences]))
     
