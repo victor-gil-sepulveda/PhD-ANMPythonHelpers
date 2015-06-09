@@ -41,7 +41,7 @@ class ProdyNMDWriter(object):
     def write(cls, name, eigenvalues, eigenvectors, header = None):
         handler = open(name+".nmd","w")
         for tag in header:
-            if tag in ["name", "type",]:
+            if tag in ["name", "type", "title"]:
                 handler.write("%s %s\n"%(tag, header[tag]))
             else:
                 handler.write("%s %s\n"%(tag, " ".join([str(h) for h in header[tag]])))
