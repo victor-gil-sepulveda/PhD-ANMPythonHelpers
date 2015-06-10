@@ -121,7 +121,6 @@ if __name__ == '__main__':
     for pdb_path in open(options.db_list).readlines():
         sequence = []
         pdb_path = pdb_path.rstrip('\r\n')
-        print pdb_path
         
         res_mapping = get_best_res_mapping(options.reference, pdb_path)
         

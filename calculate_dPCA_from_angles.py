@@ -78,5 +78,6 @@ if __name__ == '__main__':
     pro_evecs = treat_prolines_in_eigenvectors(sequences[options.ref], evecs)
     
     header = {"type": "ic:pca", 
-              "title": options.output}
+              "title": options.output,
+              "resnames":sequences[options.ref] }
     ProdyNMDWriter.write(options.output, evals, pro_evecs, header)

@@ -7,6 +7,7 @@ from optparse import OptionParser
 from anmichelpers.parsers.pronmd import ProdyNMDParser
 import numpy
 from anmichelpers.writers.pronmd import ProdyNMDWriter
+from local_to_global_cc_pca import extract_resseq
 
 def fill_with_zeros(evecs, from_res, to_res, width):
     """
@@ -33,32 +34,52 @@ def extract_evecs(evecs, from_res, to_res, sequence):
     """
     from and to are included
     """
-    num_residues = to_res - from_res +1
     real_from_res = from_res - 1
-    start_index = real_from_res * 2
-    end_index = start_index + (num_residues*2) -1 
-    # <- we neglect last phi angle because it
-    # belongs to the other residue
+    real_to_res = to_res - 1
     
-    # we also neglect one phi angle per proline
-    proline_phi_indices = []
-    for i, r_name in enumerate(sequence):
-        if i!=0 and r_name == "PRO" and i%2 == 1: 
-            # first position does not have phi
-            # and we have phis at all even positions
-            proline_phi_indices.append(2*i-1)
-            
+    class res_unit:
+        def __init__(self, name, phi, psi):
+            self.name = name 
+            self.phi = phi
+            self.psi = psi
+    
+    len_res = len(sequence)
+    residues = {}
+    evec_index = 0
+    evecT = numpy.array(evecs).T
+    for nres in range(len_res):
+        if nres == 0 or sequence[nres] == "PRO":
+            residues[nres]  = res_unit(sequence[nres], 
+                                       None, 
+                                       evecT[evec_index])
+            evec_index += 1
+        else:
+            residues[nres]  = res_unit(sequence[nres], 
+                                       evecT[evec_index], 
+                                       evecT[evec_index+1])
+            evec_index += 2
+
+    # Extract evecs
     new_evecs = []
-    for evec in evecs:
-        new_evecs.append(numpy.delete(evec[start_index:end_index], proline_phi_indices))
+    for ext_res_index in range(real_from_res, real_to_res+1):
+        if residues[ext_res_index].phi is None or ext_res_index == real_from_res:
+            new_evecs.append(residues[ext_res_index].psi)
+        else:
+            new_evecs.append(residues[ext_res_index].phi)
+            new_evecs.append(residues[ext_res_index].psi)
     
-    return numpy.array(new_evecs)
+    new_evecs = numpy.array(new_evecs).T
+    
+    # Extract sequence
+    extracted_sequence = []
+    for ext_res_index in range(real_from_res, real_to_res+1):
+        extracted_sequence.append(residues[ext_res_index].name)
+        
+        
+    return new_evecs, extracted_sequence
 
 def extract_coords(coords, from_res, to_res):
     return coords[(from_res-1)*3:to_res*3]
-
-def extract_resseq(seq, from_res, to_res):
-    return extract_evecs([seq], from_res, to_res)[0]
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -93,19 +114,21 @@ if __name__ == '__main__':
         
         assert "resnames" in g_header, "The global file must define the 'resnames' section"
         
-        header["resnames"] = extract_resseq(g_header["resnames"] , 
-                                            options.from_res, 
-                                            options.to_res)
+        evals = g_evals
+        ext_evecs, ext_sec = extract_evecs(g_evecs, 
+                              options.from_res, 
+                              options.to_res,
+                              g_header["resnames"]) # The extracted sequence
+
+        header["resnames"] = ext_sec
+        
         if "coordinates" in g_header:
             header["coordinates"] = extract_coords(g_header["coordinates"] , 
                                                 options.from_res, 
                                                 options.to_res)
         
-        evals = g_evals
-        evecs = extract_evecs(g_evecs, 
-                              options.from_res, 
-                              options.to_res,
-                              header["resnames"]) # The extracted sequence
+        evecs = ext_evecs
+        
         
     header["title"] = options.output
     ProdyNMDWriter.write(options.output, evals, evecs, header)

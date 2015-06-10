@@ -161,42 +161,82 @@ class TestPCAScriptStuff(unittest.TestCase):
         numpy.testing.assert_equal(expected_evecs, extracted_evecs)
     
     def test_extract_evecs_ic(self):
+        
+        #---------- Normal execution--------
         evecs =  [
         # psi  phi  psi  phi  psi  phi  psi  phi  psi   phi  psi  phi  psi
          [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0,  0.0, 0.0, 0.0, 0.0], 
          [0.0, 0.0, 0.0, 0.0, 0.0, 7.0, 8.0, 9.0, 10.0, 0.0, 0.0, 0.0, 0.0]
          ]
-        sequence = ["XXX","XXX"]
+        sequence = ["XAX","XBX","XCX","XDX","XEX","XFX","XGX"]
+        
+        exp_ext_sequence = ["XDX","XEX"]
         expected_evecs = [[2, 3, 4],
                           [8, 9, 10]]
         
-        extracted_evecs =  extract_evecs_ic(evecs, 4, 5, sequence)
+        extracted_evecs, ext_sequence =  extract_evecs_ic(evecs, 4, 5, sequence)
+
+        self.assertSequenceEqual(ext_sequence, exp_ext_sequence)
         numpy.testing.assert_equal(expected_evecs, extracted_evecs)
 
+        #---------- To right border -------
         evecs =  [
         # psi  phi  psi   phi   psi   phi   psi
          [1.0, 2.0,  3.0, 4.0,  5.0,  6.0,  7.0], 
          [8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0]
          ]
+        sequence = ["XAX","XBX","XCX","XDX"]
         
         expected_evecs = [[5.0,   6.0,  7.0], 
                          [ 12.0, 13.0, 14.0]]
-        numpy.testing.assert_equal(expected_evecs,  extract_evecs_ic(evecs, 3, 4, sequence))
+        exp_ext_sequence = ["XCX","XDX"]
         
+        extracted_evecs, ext_sequence =  extract_evecs_ic(evecs, 3, 4, sequence)
+        self.assertSequenceEqual(ext_sequence, exp_ext_sequence)
+        numpy.testing.assert_equal(expected_evecs, extracted_evecs)
+        
+        #---------- To left border -------
         expected_evecs =  [[1.0, 2.0,  3.0], 
                            [8.0, 9.0, 10.0]]
-        numpy.testing.assert_equal(expected_evecs, extract_evecs_ic(evecs, 1, 2, sequence))
+        exp_ext_sequence = ["XAX","XBX"]
+        extracted_evecs, ext_sequence =  extract_evecs_ic(evecs, 1, 2, sequence)
+        self.assertSequenceEqual(ext_sequence, exp_ext_sequence)
+        numpy.testing.assert_equal(expected_evecs, extracted_evecs)
         
         
-        sequence = ["XXX","PRO"]
-        expected_evecs = [[2,  4],
-                          [8, 10]]
+        #---------- With a proline in the selection -------
         evecs =  [
-        # psi  phi  psi  phi  psi  phi  psi  phi  psi   phi  psi  phi  psi
+        #  1       2        3         4       5       6
+        #"XXX"   "XXX"    "XXX"     "XXX"   "PRO"   "XXX"    
+        # psi  phi  psi  phi  psi  phi  psi  psi  phi   psi  phi  psi  phi
          [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0,  0.0, 0.0, 0.0, 0.0], 
          [0.0, 0.0, 0.0, 0.0, 0.0, 7.0, 8.0, 9.0, 10.0, 0.0, 0.0, 0.0, 0.0]
          ]
-        extracted_evecs =  extract_evecs_ic(evecs, 4, 5, sequence)
+        sequence = ["XAX","XBX","XCX","XDX","PRO","XFX","XGX"]
+
+        exp_ext_sequence = ["XDX","PRO"]
+        expected_evecs = [[2, 3],
+                          [8, 9]]
+        extracted_evecs, ext_sequence =  extract_evecs_ic(evecs, 4, 5, sequence)
+        self.assertSequenceEqual(ext_sequence, exp_ext_sequence)
+        numpy.testing.assert_equal(expected_evecs, extracted_evecs)
+
+        #---------- With a proline before and into the selection -------
+        evecs =  [
+        #  1      2       3       4      5       6         7 
+        #"XXX"  "XXX"   "PRO"   "XXX"  "PRO"   "XXX"     "XXX" 
+        # psi  phi  psi  psi  phi  psi  psi   phi  psi  phi  psi
+         [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0,  0.0, 0.0, 0.0, 0.0], 
+         [0.0, 0.0, 0.0, 0.0, 0.0, 7.0, 8.0, 9.0, 10.0, 0.0, 0.0, 0.0, 0.0]
+         ]
+        sequence = ["XAX","XBX","PRO","XDX","PRO","XFX","XGX"]
+        
+        exp_ext_sequence = ["XDX","PRO"]
+        expected_evecs = [[1, 2],
+                          [7, 8]]
+        
+        extracted_evecs, ext_sequence =  extract_evecs_ic(evecs, 4, 5, sequence)
+        self.assertSequenceEqual(ext_sequence, exp_ext_sequence)
         numpy.testing.assert_equal(expected_evecs, extracted_evecs)
 
     
@@ -224,8 +264,6 @@ class TestPCAScriptStuff(unittest.TestCase):
         ### One residue less in the target sequence (due to a gap in the 
         ### structure)
         
-        ['PHE', 'ASN', 'GLU', 'GLU', 'LYS', 'MET', 'HID', 'GLN', 'SER', 'ALA', 'MET', 'TYR', 'GLU']
-        ['PHE', 'GLU', 'GLU', 'LYS', 'MET', 'HID', 'GLN', 'SER', 'ALA', 'MET', 'TYR', 'GLU', 'GAP']
         
         expected_angles = numpy.loadtxt(os.path.join(test.data.__path__[0], "helix_gap_1.angles")) 
         expected_sequence = ['PHE', 'GLU', 'GLU', 'LYS', 'MET', 'HID', 'GLN', 'SER', 'ALA', 'MET', 'TYR', 'GLU', 'GAP']
