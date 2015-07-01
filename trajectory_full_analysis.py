@@ -9,13 +9,24 @@ file.
 import os
 import glob
 import numpy
-import mdtraj
-from anmichelpers.tools.tools import load_all_pdbs_ca
-#import matplotlib.pyplot as plt
-from anmichelpers.tools.measure import rmsf
 from optparse import OptionParser
 
+mdtraj_accessible = True
+
+try:
+    import mdtraj
+except:
+    mdtraj_accessible = False
+
+anmhelpers_accessible = True
+try:    
+    from anmichelpers.tools.tools import load_all_pdbs_ca
+    from anmichelpers.tools.measure import rmsf
+except:
+    anmhelpers_accessible = False
+
 def analyze_trajectory(traj_path, do_sasa, do_rgyr, do_rmsf, report_pattern):
+    #Shrake, A; Rupley, JA. (1973) J Mol Biol 79 (2): 351--71.
     
     trajectory = None
     data = None
@@ -24,7 +35,7 @@ def analyze_trajectory(traj_path, do_sasa, do_rgyr, do_rmsf, report_pattern):
         print "Calculating SASA ..."
         if trajectory is None:
             trajectory = mdtraj.load(traj_path)
-        sasa = mdtraj.shrake_rupley(trajectory).sum(axis=1)
+        sasa = mdtraj.shrake_rupley(trajectory, mode = 'residue').sum(axis=1)
         numpy.savetxt(traj_path+'.sasa', sasa)
     
     if do_rgyr:
@@ -43,8 +54,8 @@ def analyze_trajectory(traj_path, do_sasa, do_rgyr, do_rmsf, report_pattern):
                                        "source": traj_path, 
                                        "base_selection":"name CA"   
                                     }])
-        rmsf = rmsf(data.structure_ensemble)
-        numpy.savetxt(traj_path+'.rmsf', rgyr)
+        rmsf_array = rmsf(data.structure_ensemble)
+        numpy.savetxt(traj_path+'.rmsf', rmsf_array)
 
     if data is not None:
         del data
@@ -68,7 +79,7 @@ def analyze_trajectory(traj_path, do_sasa, do_rgyr, do_rmsf, report_pattern):
         total = numpy.sum(all_total)
         accepted = numpy.sum(all_accepted)
         acceptance = accepted / total
-        numpy.savetxt(traj_path+'.acc', [acceptance], fmt = "%f.4 ")
+        numpy.savetxt(traj_path+'.acc', [acceptance], fmt = "%.4f ")
         numpy.savetxt(traj_path+'.ener', all_energies)
 
 def process_report_file(report_file):
@@ -94,11 +105,22 @@ if __name__ == '__main__':
     
     (options, args) = parser.parse_args()
 
+    assert  options.traj_path is not None, "It is mandatory to choose a valid trajectory file (-i option)"
+    
+    if  (options.do_sasa or options.do_rgyr) and not mdtraj_accessible: 
+        print "It was not possible to load the 'mdtraj' module. Using the '--sasa' or '--rgyr' options is not possible."
+        exit()
+        
+    if options.do_rmsf and not anmhelpers_accessible:
+        print "It was not possible to load the 'anmichelpers' module. Using the '--rmsf' option is not possible."
+        exit()
+    
     analyze_trajectory(options.traj_path, 
                        options.do_sasa,
                        options.do_rgyr,
                        options.do_rmsf,
                        options.report)
-# Get the distributions
+
+#import matplotlib.pyplot as plt
 #    plt.hist(sasa)
 #    plt.show()
