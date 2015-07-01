@@ -115,11 +115,28 @@ if __name__ == '__main__':
         print "It was not possible to load the 'anmichelpers' module. Using the '--rmsf' option is not possible."
         exit()
     
-    analyze_trajectory(options.traj_path, 
-                       options.do_sasa,
-                       options.do_rgyr,
-                       options.do_rmsf,
-                       options.report)
+    _, ext = os.path.splitext(options.traj_path)
+    if ext == ".txt":
+        for line in open(options.traj_path).readlines():
+            parts = line.rstrip('\r\n').split()
+            if len(parts) == 2:
+                analyze_trajectory(parts[0], 
+                           options.do_sasa,
+                           options.do_rgyr,
+                           options.do_rmsf,
+                           parts[1])
+            else:
+                analyze_trajectory(parts[0], 
+                           options.do_sasa,
+                           options.do_rgyr,
+                           options.do_rmsf,
+                           options.report)
+    else:
+        analyze_trajectory(options.traj_path, 
+                           options.do_sasa,
+                           options.do_rgyr,
+                           options.do_rmsf,
+                           options.report)
 
 #import matplotlib.pyplot as plt
 #    plt.hist(sasa)
