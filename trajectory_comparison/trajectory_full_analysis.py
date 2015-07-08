@@ -29,7 +29,8 @@ except:
 
 def calculate_sasa_with_vmd(pdb_file, outfile):
     """
-    Calculates SASA in Angstrom^2. 'mdtraj' calculates it in nm^2.
+    It executes a vmd script in order to calculate trajectory' SASA (Angstrom^2). 
+    'mdtraj' calculates it in nm^2.
     """
     vmd_code = """# from http://www.ks.uiuc.edu/Research/vmd/mailing_list/vmd-l/7502.html
 mol load pdb  %s
@@ -48,7 +49,7 @@ quit
     
     open("tmp_vmd_script","w").write(vmd_code)
     os.system("vmd -dispdev none -e tmp_vmd_script > vmd_out")
-    #os.system("rm tmp_vmd_script tmp_vmd_out vmd_out")
+    os.system("rm tmp_vmd_script tmp_vmd_out vmd_out")
     sasa = numpy.loadtxt("tmp_vmd_out")
     sasa = sasa /100.
     numpy.savetxt(outfile, sasa, "%.4f")

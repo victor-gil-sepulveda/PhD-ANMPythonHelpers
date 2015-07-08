@@ -10,41 +10,41 @@ Input files can be manually changed in order to analyze another distributions of
 
 input_files = {
 
-"Results/results/1432_0_25.sasa":{"T":1432, "Ca_dist":0.25},
-"Results/results/1432_0_66.sasa":{"T":1432, "Ca_dist":0.66},
-"Results/results/1432_1_08.sasa":{"T":1432, "Ca_dist":1.08},
-"Results/results/1432_1_5.sasa":{"T":1432, "Ca_dist":1.5},
-"Results/results/2000_0_25.sasa":{"T":2000, "Ca_dist":0.25},
-"Results/results/2000_0_66.sasa":{"T":2000, "Ca_dist":0.66},
-"Results/results/2000_1_08.sasa":{"T":2000, "Ca_dist":1.08},
-"Results/results/2000_1_5.sasa":{"T":2000, "Ca_dist":1.5},
-"Results/results/300_0_25.sasa":{"T":300, "Ca_dist":0.25},
-"Results/results/300_0_66.sasa":{"T":300, "Ca_dist":0.66},
-"Results/results/300_1_08.sasa":{"T":300, "Ca_dist":1.08},
-"Results/results/300_1_5.sasa":{"T":300, "Ca_dist":1.5},
-"Results/results/866_0_25.sasa":{"T":866, "Ca_dist":0.25},
-"Results/results/866_0_66.sasa":{"T":866, "Ca_dist":0.66},
-"Results/results/866_1_08.sasa":{"T":866, "Ca_dist":1.08},
-"Results/results/866_1_5.sasa":{"T":866, "Ca_dist":1.5}
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_25.sasa":{"T":1432, "Ca_dist":0.25},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_66.sasa":{"T":1432, "Ca_dist":0.66},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_08.sasa":{"T":1432, "Ca_dist":1.08},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_5.sasa":{"T":1432, "Ca_dist":1.5},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_25.sasa":{"T":2000, "Ca_dist":0.25},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_66.sasa":{"T":2000, "Ca_dist":0.66},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_08.sasa":{"T":2000, "Ca_dist":1.08},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_5.sasa":{"T":2000, "Ca_dist":1.5},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_25.sasa":{"T":300, "Ca_dist":0.25},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_66.sasa":{"T":300, "Ca_dist":0.66},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_08.sasa":{"T":300, "Ca_dist":1.08},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_5.sasa":{"T":300, "Ca_dist":1.5},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_25.sasa":{"T":866, "Ca_dist":0.25},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_66.sasa":{"T":866, "Ca_dist":0.66},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_08.sasa":{"T":866, "Ca_dist":1.08},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_5.sasa":{"T":866, "Ca_dist":1.5}
 }
 
 ordered_input_files = [
-    "Results/results/300_0_25.sasa",
-    "Results/results/300_0_66.sasa",
-    "Results/results/300_1_08.sasa",
-    "Results/results/300_1_5.sasa",
-    "Results/results/866_0_25.sasa",
-    "Results/results/866_0_66.sasa",
-    "Results/results/866_1_08.sasa",
-    "Results/results/866_1_5.sasa",
-    "Results/results/1432_0_25.sasa",
-    "Results/results/1432_0_66.sasa",
-    "Results/results/1432_1_08.sasa",
-    "Results/results/1432_1_5.sasa",
-    "Results/results/2000_0_25.sasa",
-    "Results/results/2000_0_66.sasa",
-    "Results/results/2000_1_08.sasa",
-    "Results/results/2000_1_5.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_25.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_66.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_08.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_5.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_25.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_66.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_08.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_5.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_25.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_66.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_08.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_5.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_25.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_66.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_08.sasa",
+    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_5.sasa",
 ]
 
 #--------------------------------------
@@ -197,10 +197,10 @@ for T in Ts:
     for ca_dist in Cas:
         jsd = JSD(input_files[files_per_CaT[(T,ca_dist)]]["distrib"], 
                            input_files[reference_filename ]["distrib"])
-#        plt.hist(input_files[files_per_CaT[(T,ca_dist)]]["values"], bins = 100, range = (min_val, max_val), normed=True)
-#        plt.hist(input_files[reference_filename]["values"], bins = 100, range = (min_val, max_val), normed=True)
-#        
-#        plt.show()
+#         plt.hist(input_files[files_per_CaT[(T,ca_dist)]]["values"], bins = 100, range = (min_val, max_val), normed=True)
+#         plt.hist(input_files[reference_filename]["values"], bins = 100, range = (min_val, max_val), normed=True)
+#         
+#         plt.show()
         row.append(jsd)
     table.append(row)
 
