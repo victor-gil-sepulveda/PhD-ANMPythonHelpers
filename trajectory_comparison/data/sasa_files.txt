@@ -1,0 +1,16 @@
+Results/results/1432_0_25.sasa
+Results/results/1432_0_66.sasa
+Results/results/1432_1_08.sasa
+Results/results/1432_1_5.sasa
+Results/results/2000_0_25.sasa
+Results/results/2000_0_66.sasa
+Results/results/2000_1_08.sasa
+Results/results/2000_1_5.sasa
+Results/results/300_0_25.sasa
+Results/results/300_0_66.sasa
+Results/results/300_1_08.sasa
+Results/results/300_1_5.sasa
+Results/results/866_0_25.sasa
+Results/results/866_0_66.sasa
+Results/results/866_1_08.sasa
+Results/results/866_1_5.sasa

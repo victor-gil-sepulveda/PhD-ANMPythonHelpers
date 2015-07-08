@@ -1,9 +1,10 @@
 """
 Created on 29/06/2015
 
-@author: user
-@brief: Performs some automatic analysis over the trajectories specified in a 
-file.
+@author: vgil
+@brief: Performs some automatic analysis over the trajectories. The kind of analysis to be done are 
+specificied using the command line (rmsf, sasa, radius of gyration or a report analysis if it is a 
+PELE result)
 """
 
 import os
@@ -25,8 +26,34 @@ try:
 except:
     anmhelpers_accessible = False
 
-def analyze_trajectory(traj_path, do_sasa, do_rgyr, do_rmsf, report_pattern):
-    #Shrake, A; Rupley, JA. (1973) J Mol Biol 79 (2): 351--71.
+
+def calculate_sasa_with_vmd(pdb_file, outfile):
+    """
+    Calculates SASA in Angstrom^2. 'mdtraj' calculates it in nm^2.
+    """
+    vmd_code = """# from http://www.ks.uiuc.edu/Research/vmd/mailing_list/vmd-l/7502.html
+mol load pdb  %s
+set outfile [open %s w]
+set nf [molinfo top get numframes]
+set all [atomselect top all]
+for {set i 0} {$i<$nf} {incr i} {
+    $all frame $i
+    $all update
+    set sasa [measure sasa 1.4 $all]
+    puts $outfile "$sasa" 
+}
+close $outfile
+quit
+"""%(pdb_file, "tmp_vmd_out")
+    
+    open("tmp_vmd_script","w").write(vmd_code)
+    os.system("vmd -dispdev none -e tmp_vmd_script > vmd_out")
+    #os.system("rm tmp_vmd_script tmp_vmd_out vmd_out")
+    sasa = numpy.loadtxt("tmp_vmd_out")
+    sasa = sasa /100.
+    numpy.savetxt(outfile, sasa, "%.4f")
+
+def analyze_trajectory(traj_path, do_sasa, do_sasa_vmd, do_rgyr, do_rmsf, report_pattern):
     
     trajectory = None
     data = None
@@ -35,8 +62,12 @@ def analyze_trajectory(traj_path, do_sasa, do_rgyr, do_rmsf, report_pattern):
         print "Calculating SASA ..."
         if trajectory is None:
             trajectory = mdtraj.load(traj_path)
+        #Shrake, A; Rupley, JA. (1973) J Mol Biol 79 (2): 351--71.
         sasa = mdtraj.shrake_rupley(trajectory, mode = 'residue').sum(axis=1)
         numpy.savetxt(traj_path+'.sasa', sasa)
+
+    if do_sasa_vmd:
+        calculate_sasa_with_vmd(traj_path, traj_path+'.sasa')
     
     if do_rgyr:
         print "Calculating Radius of Gyration ..."
@@ -99,6 +130,7 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-i", dest="traj_path")
     parser.add_option("--sasa", dest="do_sasa", action="store_true", default=False)
+    parser.add_option("--sasa-vmd", dest="do_sasa_vmd", action="store_true", default=False)
     parser.add_option("--rgyr", dest="do_rgyr", action="store_true", default=False)
     parser.add_option("--rmsf", dest="do_rmsf", action="store_true", default=False)
     parser.add_option("--report", dest="report", default="")
@@ -117,23 +149,28 @@ if __name__ == '__main__':
     
     _, ext = os.path.splitext(options.traj_path)
     if ext == ".txt":
+        print "Reading from ", options.traj_path
         for line in open(options.traj_path).readlines():
             parts = line.rstrip('\r\n').split()
+            print "Processing ", parts[0], " ..."
             if len(parts) == 2:
                 analyze_trajectory(parts[0], 
                            options.do_sasa,
+                           options.do_sasa_vmd,
                            options.do_rgyr,
                            options.do_rmsf,
                            parts[1])
             else:
                 analyze_trajectory(parts[0], 
                            options.do_sasa,
+                           options.do_sasa_vmd,
                            options.do_rgyr,
                            options.do_rmsf,
                            options.report)
     else:
         analyze_trajectory(options.traj_path, 
                            options.do_sasa,
+                           options.do_sasa_vmd,
                            options.do_rgyr,
                            options.do_rmsf,
                            options.report)
