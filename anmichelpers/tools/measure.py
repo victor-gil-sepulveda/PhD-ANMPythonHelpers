@@ -48,17 +48,17 @@ def rmsf(prody_pdb):
     calculator = RMSDCalculator(calculatorType = "QTRFIT_SERIAL_CALCULATOR",
                                 fittingCoordsets = ca_coords)
     
-    calculator.iterativeSuperposition()
+    new_coords = calculator.iterativeSuperposition()
     
     # Calculate the actual rmsf
-    mean_conformation = ca_coords.mean(0)
+    mean_conformation = new_coords.mean(0)
     
     ssqf = numpy.zeros(mean_conformation.shape)
 
-    for conf in ca_coords:
+    for conf in new_coords:
             ssqf += (conf - mean_conformation) ** 2
             
-    return (ssqf.sum(1) / ca_coords.shape[0])**0.5
+    return (ssqf.sum(1) / new_coords.shape[0])**0.5
 
 def calculate_angle(v1, v2):
     norm_v1 = math.sqrt(numpy.dot(v1,v1))

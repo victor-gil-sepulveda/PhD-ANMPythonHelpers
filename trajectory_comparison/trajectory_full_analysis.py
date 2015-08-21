@@ -49,7 +49,7 @@ quit
     
     open("tmp_vmd_script","w").write(vmd_code)
     os.system("vmd -dispdev none -e tmp_vmd_script > vmd_out")
-    os.system("rm tmp_vmd_script tmp_vmd_out vmd_out")
+    os.system("rm tmp_vmd_script vmd_out")
     sasa = numpy.loadtxt("tmp_vmd_out")
     sasa = sasa /100.
     numpy.savetxt(outfile, sasa, "%.4f")
