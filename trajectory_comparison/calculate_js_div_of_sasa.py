@@ -8,45 +8,98 @@ Input files can be manually changed in order to analyze another distributions of
 
 #----------INPUT FILES ----------------
 
-input_files = {
+# input_files = {
+# 
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_25.sasa":{"T":1432, "Ca_dist":0.25},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_66.sasa":{"T":1432, "Ca_dist":0.66},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_08.sasa":{"T":1432, "Ca_dist":1.08},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_5.sasa":{"T":1432, "Ca_dist":1.5},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_25.sasa":{"T":2000, "Ca_dist":0.25},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_66.sasa":{"T":2000, "Ca_dist":0.66},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_08.sasa":{"T":2000, "Ca_dist":1.08},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_5.sasa":{"T":2000, "Ca_dist":1.5},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_25.sasa":{"T":300, "Ca_dist":0.25},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_66.sasa":{"T":300, "Ca_dist":0.66},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_08.sasa":{"T":300, "Ca_dist":1.08},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_5.sasa":{"T":300, "Ca_dist":1.5},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_25.sasa":{"T":866, "Ca_dist":0.25},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_66.sasa":{"T":866, "Ca_dist":0.66},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_08.sasa":{"T":866, "Ca_dist":1.08},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_5.sasa":{"T":866, "Ca_dist":1.5}
+# }
+# 
+# ordered_input_files = [
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_25.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_66.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_08.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_5.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_25.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_66.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_08.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_5.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_25.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_66.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_08.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_5.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_25.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_66.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_08.sasa",
+#     "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_5.sasa",
+# ]
+# 
+# # Ordered labels
+# Ts = [300, 866, 1432, 2000]
+# Cas = [0.25, 0.66, 1.08, 1.5]
 
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_25.sasa":{"T":1432, "Ca_dist":0.25},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_66.sasa":{"T":1432, "Ca_dist":0.66},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_08.sasa":{"T":1432, "Ca_dist":1.08},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_5.sasa":{"T":1432, "Ca_dist":1.5},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_25.sasa":{"T":2000, "Ca_dist":0.25},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_66.sasa":{"T":2000, "Ca_dist":0.66},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_08.sasa":{"T":2000, "Ca_dist":1.08},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_5.sasa":{"T":2000, "Ca_dist":1.5},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_25.sasa":{"T":300, "Ca_dist":0.25},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_66.sasa":{"T":300, "Ca_dist":0.66},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_08.sasa":{"T":300, "Ca_dist":1.08},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_5.sasa":{"T":300, "Ca_dist":1.5},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_25.sasa":{"T":866, "Ca_dist":0.25},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_66.sasa":{"T":866, "Ca_dist":0.66},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_08.sasa":{"T":866, "Ca_dist":1.08},
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_5.sasa":{"T":866, "Ca_dist":1.5}
+#--------------------------------------
+# 
+# input_files = {
+# # "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/TestANMCCBest10modes/all.pdb.sasa":{"T":2000, "Ca_dist":1.5},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_sdmin/all.pdb.sasa":{"T":300, "Ca_dist":2.},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_500_sdmin/all.pdb.sasa":{"T":500, "Ca_dist":2.},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_700_sdmin/all.pdb.sasa":{"T":700, "Ca_dist":2.},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.residue_8_to_266.sasa":{"T":"MD", "Ca_dist":2.}
+# 
+# }
+# 
+# ordered_input_files = [
+# # "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/TestANMCCBest10modes/all.pdb.sasa",
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_sdmin/all.pdb.sasa",
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_500_sdmin/all.pdb.sasa",
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_700_sdmin/all.pdb.sasa"
+# 
+# ]
+# 
+# # Ordered labels
+# Ts = [300, 500, 700]
+# Cas = [2.,2.,2.]
+#--------------------------------------
+
+input_files = {
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/TestANMCCBest10modes/all.pdb.residue_8_to_266.sasa":{"T":2000, "Ca_dist":1.5},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_sdmin/all.pdb.residue_8_to_266.sasa":{"T":300, "Ca_dist":0.2},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_nosdmin/all.pdb.residue_8_to_266.sasa":{"T":"300_no", "Ca_dist":0.2},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_sdmin_1.0/all.pdb.residue_8_to_266.sasa":{"T":300, "Ca_dist":0.1},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_500_sdmin/all.pdb.residue_8_to_266.sasa":{"T":500, "Ca_dist":0.2},
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_700_sdmin/all.pdb.residue_8_to_266.sasa":{"T":700, "Ca_dist":0.2},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.residue_8_to_266.sasa":{"T":"MDShaw", "Ca_dist":""},
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Suwipa/mdgb1.pdb.residue_8_to_266.sasa":{"T":"MDSuw", "Ca_dist":"igb1"}
 }
 
 ordered_input_files = [
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_25.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_0_66.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_08.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/300_1_5.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_25.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_0_66.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_08.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/866_1_5.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_25.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_0_66.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_08.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/1432_1_5.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_25.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_0_66.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_08.sasa",
-    "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/Benchmark/results/2000_1_5.sasa",
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_CC/TestANMCCBest10modes/all.pdb.residue_8_to_266.sasa",
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_sdmin/all.pdb.residue_8_to_266.sasa",
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_nosdmin/all.pdb.residue_8_to_266.sasa",
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_sdmin_1.0/all.pdb.residue_8_to_266.sasa",
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_500_sdmin/all.pdb.residue_8_to_266.sasa",
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_700_sdmin/all.pdb.sasa",
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.residue_8_to_266.sasa",
+"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Suwipa/mdgb1.pdb.residue_8_to_266.sasa"
 ]
 
+# Ordered labels
+Ts = [2000, 300, "300_no", 300, 500, "MDSuw", "MDShaw"]
+Cas = [1.5, 0.2, 0.2, 0.1, 0.2, "igb1", "",]
 #--------------------------------------
 
 import numpy 
@@ -91,7 +144,7 @@ def show_table(data, x_label, y_label):
     """
     Shows a "heatmap"-like plot, adds the labels and the color bar legend.
     """
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     plt.subplots_adjust(top = 0.85, left = 0.135)
     heatmap = ax.pcolormesh(data, cmap=plt.cm.Blues)
     # put the major ticks at the middle of each cell
@@ -127,12 +180,13 @@ def calculate_distributions(input_files, max_val,  min_val):
         input_files[filename]["distrib"] = smoothed(numpy.histogram(input_files[filename]["values"], 
                                                             bins = 100, range = (min_val, max_val), 
                                                             normed=True)[0])
-        #plt.hist(input_files[filename]["values"], bins = 100, range = (min_val, max_val))
-        #plt.show()
+#         print filename, input_files[filename]["T"], input_files[filename]["Ca_dist"]
+#         plt.hist(input_files[filename]["values"], bins = 100, range = (min_val, max_val))
+#         plt.show()
 
 def test_tables_correctly_plotted():
     """
-    Test snipped to visually prove that tables are correctly plotted.
+    Test snippet to visually prove that tables are correctly plotted.
     """
     table = [ [1,2,3],
               [4,5,6],
@@ -172,16 +226,12 @@ show_table(data, labels, labels)
 #------------------------------
 # All CC vs Reference (MD)
 #------------------------------
-reference_filename = "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.sasa"
+reference_filename = "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.residue_8_to_266.sasa"
 input_files[reference_filename] = {"T":0,"Ca_dist":0.}
 
 max_val,  min_val = load_values(input_files)
 
 calculate_distributions(input_files, max_val,  min_val )
-
-# Ordered labels
-Ts = [300, 866, 1432, 2000]
-Cas = [0.25, 0.66, 1.08, 1.5]
 
 # Reorder files indexing by T and Ca dist
 files_per_CaT = {}
@@ -190,20 +240,36 @@ for filename in ordered_input_files:
     Ca = input_files[filename]["Ca_dist"]
     files_per_CaT[(T,Ca)] = filename
 
-# Calculate table
-table = []
-for T in Ts:
-    row = []
-    for ca_dist in Cas:
-        jsd = JSD(input_files[files_per_CaT[(T,ca_dist)]]["distrib"], 
-                           input_files[reference_filename ]["distrib"])
+# # Calculate table
+# table = []
+# for T in Ts:
+#     row = []
+#     for ca_dist in Cas:
+#         jsd = JSD(input_files[files_per_CaT[(T,ca_dist)]]["distrib"], 
+#                            input_files[reference_filename ]["distrib"])
 #         plt.hist(input_files[files_per_CaT[(T,ca_dist)]]["values"], bins = 100, range = (min_val, max_val), normed=True)
 #         plt.hist(input_files[reference_filename]["values"], bins = 100, range = (min_val, max_val), normed=True)
-#         
+#           
 #         plt.show()
-        row.append(jsd)
-    table.append(row)
+#         row.append(jsd)
+#     table.append(row)
+# 
+# data = numpy.array(table)
+# show_table(data, Cas, Ts)
 
-data = numpy.array(table)
-show_table(data, Cas, Ts)
+# Calculate table
+table = []
+for i in range(len(Cas)):
+    ca_dist  = Cas[i]
+    T = Ts[i]
+    print files_per_CaT[(T,ca_dist)]
+    jsd = JSD(input_files[files_per_CaT[(T,ca_dist)]]["distrib"], 
+                       input_files[reference_filename ]["distrib"])
+    print ca_dist, T, jsd
+    
+    plt.hist(input_files[files_per_CaT[(T,ca_dist)]]["values"], bins = 100, range = (min_val, max_val), normed=True)
+    plt.hist(input_files[reference_filename]["values"], bins = 100, range = (min_val, max_val), normed=True)
+      
+    plt.show()
+
 
