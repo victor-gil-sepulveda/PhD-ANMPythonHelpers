@@ -44,11 +44,12 @@ if __name__ == '__main__':
         if options.padding:
             if options.normalize:
                 ylimits = [ylimits[0]-0.1, ylimits[1]+0.1]
+                plt.ylim(ylimits)
             xlimits = [xlimits[0]-2, xlimits[1]+2]
             
         
     plt.xlim(xlimits)
-    plt.ylim(ylimits)
+    
     plt.xlabel('Residues')
     plt.ylabel('RMSF ($\AA$)')
     plt.show()

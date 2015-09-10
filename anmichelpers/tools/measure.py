@@ -58,7 +58,7 @@ def rmsf(prody_pdb):
     for conf in new_ca_coords:
             ssqf += (conf - mean_conformation) ** 2
             
-    return (ssqf.sum(1) / ca_coords.shape[0])**0.5
+    return (ssqf.sum(1) / new_ca_coords.shape[0])**0.5
 
 def calculate_angle(v1, v2):
     norm_v1 = math.sqrt(numpy.dot(v1,v1))

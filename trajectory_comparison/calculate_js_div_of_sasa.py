@@ -226,12 +226,24 @@ show_table(data, labels, labels)
 #------------------------------
 # All CC vs Reference (MD)
 #------------------------------
+<<<<<<< HEAD
 reference_filename = "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.residue_8_to_266.sasa"
 input_files[reference_filename] = {"T":0,"Ca_dist":0.}
+=======
+reference_filename = "/home/victor/Desktop/prots/pro_noh_md.pdb.sasa"
+input_files[reference_filename] = {"T":5000,"Ca_dist":1}
+>>>>>>> branch 'master' of https://github.com/victor-gil-sepulveda/PhD-ANMPythonHelpers.git
 
 max_val,  min_val = load_values(input_files)
 
 calculate_distributions(input_files, max_val,  min_val )
+<<<<<<< HEAD
+=======
+
+# Ordered labels
+Ts = [3000, 5000]
+Cas = [1]
+>>>>>>> branch 'master' of https://github.com/victor-gil-sepulveda/PhD-ANMPythonHelpers.git
 
 # Reorder files indexing by T and Ca dist
 files_per_CaT = {}
@@ -239,7 +251,9 @@ for filename in ordered_input_files:
     T = input_files[filename]["T"]
     Ca = input_files[filename]["Ca_dist"]
     files_per_CaT[(T,Ca)] = filename
+    print (T,Ca)
 
+<<<<<<< HEAD
 # # Calculate table
 # table = []
 # for T in Ts:
@@ -256,6 +270,21 @@ for filename in ordered_input_files:
 # 
 # data = numpy.array(table)
 # show_table(data, Cas, Ts)
+=======
+# Calculate table
+table = []
+for T in Ts:
+    row = []
+    for ca_dist in Cas:
+        jsd = JSD(input_files[files_per_CaT[(T,ca_dist)]]["distrib"], 
+                           input_files[reference_filename ]["distrib"])
+        plt.hist(input_files[files_per_CaT[(T,ca_dist)]]["values"], bins = 100, range = (min_val, max_val), normed=True)
+        plt.hist(input_files[reference_filename]["values"], bins = 100, range = (min_val, max_val), normed=True)
+         
+        plt.show()
+        row.append(jsd)
+    table.append(row)
+>>>>>>> branch 'master' of https://github.com/victor-gil-sepulveda/PhD-ANMPythonHelpers.git
 
 # Calculate table
 table = []

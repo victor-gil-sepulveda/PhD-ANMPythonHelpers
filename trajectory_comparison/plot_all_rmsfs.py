@@ -43,11 +43,12 @@ control_rmsf_files = {
 # "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_700_sdmin/all.pdb.rmsf":{"T":"IC700:0.2", "Ca_dist":"sdmin"},
  "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/ANM_IC/T_300_sdmin_1.0/all.pdb.rmsf":{"T":"IC300:0.1", "Ca_dist":"sdmin"},
 
-
-"/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.rmsf":{"T":"MD", "Ca_dist":"Shaw"}
+# "/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.rmsf":{"T":"MD", "Ca_dist":"Shaw"}
+"/home/victor/Desktop/prots/all.pdb.rmsf":{"T":"3000", "Ca_dist":"--"},
+"/home/victor/Desktop/prots/pro_noh_md.pdb.rmsf":{"T":"MD", "Ca_dist":"Shaw"}
 }
 
-REFERENCE_RMSF = numpy.loadtxt("/media/victor/d9c4538f-7e46-492d-812b-8110c78c0af9/ANMIC/MD/Shaw/pro_noh_md.pdb.rmsf")[:-1]
+REFERENCE_RMSF = numpy.loadtxt("/home/victor/Desktop/prots/pro_noh_md.pdb.rmsf")[:-1]
 
 def rms(one, two):
     return math.sqrt( numpy.dot(one-two, one-two)/len(one))
