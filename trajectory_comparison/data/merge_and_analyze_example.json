@@ -1,0 +1,45 @@
+{
+	"workspace": "/home/victor/Desktop/Analysis/2568_1_08/",
+	
+	"merge":{
+		"do": false,
+		"script_location": "~/git/PhD-PDBTrajectoryMerger/PDBTrajectoryMerger.py",
+		"working_directory": "/home/victor/Desktop/2568_1_08/",
+		"trajectory_prefix": "run_trajectory_",
+		"merged_file": "2568_1_08.merged.pdb"
+	},
+	
+	"analyze":{
+		"do": false,
+		"script_location": "~/git/PhD-ANMPythonHelpers/trajectory_comparison/trajectory_full_analysis.py",
+		"sasa_rgyr": {
+			"sasa":true,
+			"rgyr": true,
+			"selection": "residue 8 to 266"
+		},
+		"rmsf": false,
+		"acceptance":{
+			"working_directory": "/home/victor/Desktop/2568_1_08/",
+			"report_glob": "run_report_*"
+		}
+	},
+	
+	"compare":{
+		"do":true,
+		
+		"sasa":{
+			"script_location": "~/git/PhD-ANMPythonHelpers/trajectory_comparison/compare_two_sasas.py",
+			"reference": "/home/victor/Desktop/prots/pro_noh_md.pdb.sasa"
+		},
+		/*"rgyr":{
+			"script_location": "~/git/PhD-ANMPythonHelpers/trajectory_comparison/compare_two_sasas.py",
+			"reference": ""
+		},*/
+		"rmsf":{
+			"script_location": "~/git/PhD-ANMPythonHelpers/trajectory_comparison/compare_two_rmsfs.py",
+			"reference": "/home/victor/Desktop/prots/pro_noh_md.pdb.rmsf"
+		},
+		"gove":{},
+		"anha":{}
+	}	
+}

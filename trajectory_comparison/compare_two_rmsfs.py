@@ -1,8 +1,8 @@
-'''
+"""
 Created on Aug 21, 2015
 
 @author: victor
-'''
+"""
 
 import sys
 import math
@@ -22,12 +22,18 @@ if __name__ == '__main__':
     rmsf1 = rmsf1[0:common_length]
     rmsf2 = rmsf2[0:common_length]
 
+    rms_rmsf = rms(rmsf1, rmsf2)
     print "-----------------------"
-    print " RMS: ",rms(rmsf1, rmsf2)
+    print " RMS: ", rms_rmsf
     print "-----------------------"
 
     plt.plot(rmsf1, label = os.path.basename(sys.argv[1]))
     plt.plot(rmsf2, label = os.path.basename(sys.argv[2]))
     plt.legend(loc=9, ncol = 4)
-    plt.show()
+    
+    if len(sys.argv) > 3:
+        plt.savefig("%s.svg"%sys.argv[2])
+        open("%s.rms_rmsfs"%sys.argv[2],"w").write("%.3f"%rms_rmsf)
+    else:
+        plt.show()
         

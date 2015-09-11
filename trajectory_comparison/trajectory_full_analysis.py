@@ -42,6 +42,25 @@ close $outfile
 quit
 """
 
+VMD_MEASURE_SASA_AND_RGYR_SCRIPT = """mol load pdb  %s
+set outfile_sasa [open %s w]
+set outfile_rgyr [open %s w]
+set nf [molinfo top get numframes]
+set all [atomselect top "%s"]
+for {set i 0} {$i<$nf} {incr i} {
+    $all frame $i
+    $all update
+    set sasa [measure sasa 1.4 $all]
+    set rgyr [measure rgyr $all]
+    puts $outfile_sasa "$sasa" 
+    puts $outfile_rgyr "$rgyr" 
+    
+}
+close $outfile_sasa
+close $outfile_rgyr
+quit
+"""
+
 def execute_vmd_script(vmd_code):
     open("tmp_vmd_script","w").write(vmd_code)
     os.system("vmd -dispdev none -e tmp_vmd_script > vmd_out")
@@ -74,13 +93,25 @@ def calculate_rgyr_with_vmd(pdb_file, outfile, vmd_selection):
     rgyr = get_vmd_array()
     
     numpy.savetxt(outfile, rgyr, "%.4f")
-
+    
+def calculate_sasa_and_rgyr_with_vmd(pdb_file, sasa_outfile, rgyr_outfile, vmd_selection):
+    vmd_code = VMD_MEASURE_SASA_AND_RGYR_SCRIPT%(pdb_file, "tmp_vmd_out_sasa", "tmp_vmd_out_rgyr", vmd_selection)
+    execute_vmd_script(vmd_code)
+    
+    sasa = numpy.loadtxt("tmp_vmd_out_sasa")/100.
+    rgyr = numpy.loadtxt("tmp_vmd_out_rgyr")
+    
+    #os.system("rm tmp_vmd_script tmp_vmd_out_sasa tmp_vmd_out_rgyr vmd_out")
+    
+    numpy.savetxt(sasa_outfile, sasa, "%.4f")
+    numpy.savetxt(rgyr_outfile, rgyr, "%.4f")
 
 def analyze_trajectory(traj_path, 
                        do_sasa, do_sasa_vmd, 
                        do_rgyr, do_rgyr_vmd, vmd_selection,
                        do_rmsf, 
-                       report_pattern, 
+                       report_pattern,
+                       report_dir,
                        disp_logfile):
     
     trajectory = None
@@ -94,12 +125,18 @@ def analyze_trajectory(traj_path,
         sasa = mdtraj.shrake_rupley(trajectory, mode = 'residue').sum(axis=1)
         numpy.savetxt(traj_path+'.sasa', sasa)
 
-    if do_sasa_vmd:
+    if do_sasa_vmd and do_rgyr_vmd:
+        calculate_sasa_and_rgyr_with_vmd(traj_path, 
+                                '%s.%s.sasa'%(traj_path, vmd_selection.replace(" ","_")),
+                                '%s.%s.rgyr'%(traj_path, vmd_selection.replace(" ","_")),
+                                vmd_selection)
+    
+    if do_sasa_vmd and not do_rgyr_vmd:
         calculate_sasa_with_vmd(traj_path, 
                                 '%s.%s.sasa'%(traj_path, vmd_selection.replace(" ","_")), 
                                 vmd_selection)
         
-    if do_rgyr_vmd:
+    if do_rgyr_vmd and not do_sasa_vmd:
         calculate_sasa_with_vmd(traj_path, 
                                 '%s.%s.rgyr'%(traj_path, vmd_selection.replace(" ","_")), 
                                 vmd_selection)
@@ -127,13 +164,13 @@ def analyze_trajectory(traj_path,
         del data
     
     if report_pattern != "":
-        print "Extracting acceptance and energies from report files with pattern %s ..."%report_pattern
-        directory, _ = os.path.split(traj_path)
+        print "Extracting acceptance and energies from report files with pattern %s inside %s ..."%(report_pattern, 
+                                                                                                    report_dir)
         
-        files = glob.glob(os.path.join(directory, report_pattern))
+        files = glob.glob(os.path.join(report_dir, report_pattern))
         
         assert len(files)!=0, "No report file with pattern %s found inside %s"%(report_pattern,
-                                                                                 directory)
+                                                                                 report_dir)
         all_accepted = []
         all_total = []
         all_energies = []
@@ -182,11 +219,12 @@ if __name__ == '__main__':
     parser.add_option("--rgyr-vmd", dest="do_rgyr_vmd", action="store_true", default=False)
     parser.add_option("--rmsf", dest="do_rmsf", action="store_true", default=False)
     parser.add_option("--report", dest="report", default="")
+    parser.add_option("--report-dir", dest="report_dir", default="")
     parser.add_option("--disp", dest="disp", default="")
     
     (options, args) = parser.parse_args()
 
-    assert  options.traj_path is not None, "It is mandatory to choose a valid trajectory file (-i option)"
+    assert options.traj_path is not None, "It is mandatory to choose a valid trajectory file (-i option)"
     
     if  (options.do_sasa or options.do_rgyr) and not mdtraj_accessible: 
         print "It was not possible to load the 'mdtraj' module. Using the '--sasa' or '--rgyr' options is not possible."
@@ -211,6 +249,7 @@ if __name__ == '__main__':
                            options.vmd_sel,
                            options.do_rmsf,
                            parts[1],
+                           parts[2],
                            options.disp)
             else:
                 analyze_trajectory(parts[0], 
@@ -221,6 +260,7 @@ if __name__ == '__main__':
                            options.vmd_sel,
                            options.do_rmsf,
                            options.report,
+                           options.report_dir,
                            options.disp)
     else:
         analyze_trajectory(options.traj_path, 
@@ -231,4 +271,5 @@ if __name__ == '__main__':
                            options.vmd_sel,
                            options.do_rmsf,
                            options.report,
+                           options.report_dir,
                            options.disp)

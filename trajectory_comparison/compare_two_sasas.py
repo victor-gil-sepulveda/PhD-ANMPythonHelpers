@@ -64,7 +64,7 @@ def calculate_distributions(input_files, max_val,  min_val):
     for filename in input_files:
         input_files[filename]["distrib"] = smoothed(numpy.histogram(input_files[filename]["values"], 
                                                             bins = 100, range = (min_val, max_val), 
-                                                            normed=True)[0])
+                                                            normed=True, density=True)[0])
 
 if __name__ == '__main__':
     
@@ -77,9 +77,11 @@ if __name__ == '__main__':
     
     calculate_distributions(files, max_val,  min_val)
     
+    jsd = JSD(  files[sys.argv[1]]["distrib"], 
+                files[sys.argv[2]]["distrib"])
+    
     print "-----------------------"
-    print " JSD: ", JSD(files[files.keys()[0]]["distrib"], 
-                           files[files.keys()[1]]["distrib"])
+    print " JSD: ", jsd
     print "-----------------------"
     
     for i, filename in enumerate(files.keys()):
@@ -90,9 +92,15 @@ if __name__ == '__main__':
         plt.hist(files[filename]["values"], bins = 100, 
                  range = (min_val, max_val), 
                  label = os.path.basename(filename),
+                 normed=True,
                  alpha = alpha)
     
     plt.legend()
-    plt.show()
+    
+    if len(sys.argv) > 3:
+        plt.savefig("%s.svg"%sys.argv[2])
+        open("%s.jsd"%sys.argv[2],"w").write("%.3f"%jsd)
+    else:
+        plt.show()
     
     
