@@ -20,6 +20,10 @@ def execute_pipeline(parameters):
         command = MERGING_COMMAND%parameters["merge"]
         print "Issuing >> ", command
         os.system(command)
+        if parameters["merge"]["delete_parts"]:
+            os.system("rm %s*"%(os.path.join(parameters["merge"]["working_directory"], parameters["merge"]["trajectory_prefix"])))
+        if parameters["merge"]["compress_logs"]:
+            os.system("tar -zcvf %(folder)s/logs.tar.gz %(folder)s/log_* --remove-files"%({"folder":os.path.join(parameters["merge"]["working_directory"])}))
     
     # Perform all analyses
     if parameters["analyze"]["do"]:
@@ -49,7 +53,11 @@ def execute_pipeline(parameters):
         os.system(command)
     
     if parameters["compare"]["do"]:
-        selection = parameters["analyze"]["sasa_rgyr"]["selection"]
+        try:
+            selection = parameters["analyze"]["sasa_rgyr"]["selection"]
+        except:
+            selection = "all"
+            
         base_path_for_sasa_rgyr = "%s.%s"%(parameters["merge"]["merged_file"],
                               selection.replace(" ","_"))
         if "sasa" in parameters["compare"]:

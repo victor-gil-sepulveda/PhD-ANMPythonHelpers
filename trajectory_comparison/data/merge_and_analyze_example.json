@@ -6,7 +6,9 @@
 		"script_location": "~/git/PhD-PDBTrajectoryMerger/PDBTrajectoryMerger.py",
 		"working_directory": "/home/victor/Desktop/2568_1_08/",
 		"trajectory_prefix": "run_trajectory_",
-		"merged_file": "2568_1_08.merged.pdb"
+		"merged_file": "2568_1_08.merged.pdb",
+		"delete_parts":true,
+		"compress_logs":true
 	},
 	
 	"analyze":{
