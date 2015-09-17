@@ -34,19 +34,13 @@ def mean_square_fluctuations(eigenvalues, eigenvectors, number_of_nodes, prefact
     
     return nodes_msq
 
-def rmsf(prody_pdb):
-    """
-    Calculates CA Root Mean Square Fluctuation.
-    
-    @param prody_pdb: A prody pdb data structure.
-    
-    @return: An array with the per-residue CA rmsf.
-    """
-    # Calculate the superposition
-    ca_coords = prody_pdb.select("name CA").getCoordsets()
 
+def ca_rmsf(pdb_ca_struct):
+    ca_coords = pdb_ca_struct.getCoordsets()
     calculator = RMSDCalculator(calculatorType = "QTRFIT_OMP_CALCULATOR",
                                 fittingCoordsets = ca_coords)
+    
+    calculator.setNumberOfOpenMPThreads(4)
     
     new_ca_coords = calculator.iterativeSuperposition()
     
@@ -59,6 +53,16 @@ def rmsf(prody_pdb):
             ssqf += (conf - mean_conformation) ** 2
             
     return (ssqf.sum(1) / new_ca_coords.shape[0])**0.5
+
+def rmsf(prody_pdb):
+    """
+    Calculates CA Root Mean Square Fluctuation.
+    
+    @param prody_pdb: A prody pdb data structure.
+    
+    @return: An array with the per-residue CA rmsf.
+    """
+    return ca_rmsf(prody_pdb.select("name CA"))
 
 def calculate_angle(v1, v2):
     norm_v1 = math.sqrt(numpy.dot(v1,v1))

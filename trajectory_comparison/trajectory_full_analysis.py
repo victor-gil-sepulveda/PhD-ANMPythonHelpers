@@ -11,6 +11,7 @@ import os
 import glob
 import numpy
 from optparse import OptionParser
+from anmichelpers.tools.measure import ca_rmsf
 
 mdtraj_accessible = True
 
@@ -153,11 +154,14 @@ def analyze_trajectory(traj_path,
     
     if do_rmsf:
         print "Calculating RMSF ..." 
-        data, _ = load_all_pdbs_ca([{
-                                       "source": traj_path, 
-                                       "base_selection":"name CA"   
-                                    }])
-        rmsf_array = rmsf(data.structure_ensemble)
+#         data, _ = load_all_pdbs_ca([{
+#                                        "source": traj_path, 
+#                                        "base_selection":"name CA"   
+#                                     }])
+#         rmsf_array = rmsf(data.structure_ensemble)
+        import prody
+        
+        rmsf_array = ca_rmsf(prody.proteins.pdbfile.parsePDB(traj_path, subset='ca'))
         numpy.savetxt(traj_path+'.rmsf', rmsf_array)
 
     if data is not None:
