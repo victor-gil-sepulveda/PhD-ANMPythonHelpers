@@ -35,7 +35,7 @@ if __name__ == '__main__':
                 for it in iterations:
                     folders.append(get_folder_name(T, disp, it))
             else:
-                folder = get_folder_name( T, disp)
+                folders.append( get_folder_name( T, disp))
     
     
     BASE_PATH = "Results"

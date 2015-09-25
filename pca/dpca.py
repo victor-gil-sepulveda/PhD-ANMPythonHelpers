@@ -118,8 +118,13 @@ class dPCA:
         hist, boundaries = numpy.histogram(angles, 
                                            bins=int((math.pi*2)/ hist_bin_size),
                                            range = (-math.pi, math.pi))
+
+        print "***********************" 
+        print "***********************"
+        print "***********************"       
+        print hist
+        print "***********************"
         
-#        print hist
         # Detect base value
         min_val = numpy.min(hist)
         
@@ -151,7 +156,7 @@ class dPCA:
         # Pick the biggest zone and center the angles there
         most_dense_zone =  max(densities)
         
-        # Then pick the peak
+        # Then pick the peak :D
         left, right = most_dense_zone[1], most_dense_zone[2]+1
         if left > right:
             left_peak_value = numpy.max(hist[0:right])
@@ -172,11 +177,11 @@ class dPCA:
         for angle in shifted_angles:
             corrected_angles.append(to_pi_mpi_range(angle))
         
-#        hist, _ = numpy.histogram(corrected_angles, 
-#                                  bins=int((math.pi*2)/ hist_bin_size),
-#                                  range = (-math.pi, math.pi))
-#        print hist
-#        print "**********************"
+        hist, _ = numpy.histogram(corrected_angles, 
+                                  bins=int((math.pi*2)/ hist_bin_size),
+                                  range = (-math.pi, math.pi))
+        print hist
+        print "**********************"
         return numpy.array(corrected_angles)
     
     @classmethod
