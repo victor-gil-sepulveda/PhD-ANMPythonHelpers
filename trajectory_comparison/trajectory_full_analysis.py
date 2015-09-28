@@ -102,7 +102,7 @@ def calculate_sasa_and_rgyr_with_vmd(pdb_file, sasa_outfile, rgyr_outfile, vmd_s
     sasa = numpy.loadtxt("tmp_vmd_out_sasa")/100.
     rgyr = numpy.loadtxt("tmp_vmd_out_rgyr")
     
-    #os.system("rm tmp_vmd_script tmp_vmd_out_sasa tmp_vmd_out_rgyr vmd_out")
+    os.system("rm tmp_vmd_script tmp_vmd_out_sasa tmp_vmd_out_rgyr vmd_out")
     
     numpy.savetxt(sasa_outfile, sasa, "%.4f")
     numpy.savetxt(rgyr_outfile, rgyr, "%.4f")
