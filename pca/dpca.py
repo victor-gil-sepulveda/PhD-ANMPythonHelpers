@@ -56,6 +56,21 @@ def circular_mean_and_variance(angles):
         
     return m, 1-Rpm
 
+def circular_variance(angles):
+    """
+    A different circ. variance calculation
+    http://www.ebi.ac.uk/thornton-srv/software/PROCHECK/nmr_manual/man_cv.html
+    """
+    n = len(angles)
+    Cm = (numpy.cos(angles)).sum()
+    Sm = (numpy.sin(angles)).sum()
+    print "Cm, Sm", Cm, Sm
+    Rp = math.sqrt(Cm*Cm + Sm*Sm)
+    print "Rp", Rp
+    Rpm = Rp / n;
+    print "Rpm",Rpm
+    return 1-Rpm
+
 def two_angle_circular_correlation_coef(angles1, angles2, mean1, mean2):
     """
     Circular correlation measure. SenGupta 2001

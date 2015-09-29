@@ -4,122 +4,87 @@ Created on 25/9/2015
 @author: victor
 '''
 import sys
-from prody.proteins.pdbfile import parsePDB
-from prody.measure.measure import calcPhi, calcPsi
-import pca.dpca
 import numpy
 import math
+import trajectory_comparison.angvar_tools as ang_tools
+from pca.dpca import circular_mean_and_variance, circular_variance
 
 
+def calculate_distributions(observation, hist_bin_size = 0.1, jump_size = 15,  closeness_threshold = 10):
+    
+    hist, _ = numpy.histogram(observation, 
+                                   bins=int((math.pi*2)/ hist_bin_size),
+                                   range = (-math.pi, math.pi))
+    
+    ## Get_maximums with window mean
+    maximums = ang_tools.get_maximums(hist)
+    
+    ## Remove consecutive values
+    maximums = ang_tools.remove_consecutive_values(maximums)
+    
+    # Slope descent to calculate the distributions for each maximum
+    distribution_ranges = {}
+    for maximum in maximums:
+        distribution_ranges[maximum] = ang_tools.calculate_distribution_range(maximum, hist, jump_size)
+    
+    ang_tools.delete_overlapping_distributions(distribution_ranges, hist)
+    
+    
+    # Calculate population for each distribution
+    distribution_population = {}
+    total_population = hist.sum()
+    for maximum in distribution_ranges:
+        distribution_population[maximum] = ang_tools.calculate_range_population_percent(total_population, hist, 
+                                                                              distribution_ranges[maximum])
+    
+    # If the population is less than 20%, aggregate to the closest maximum with more than 20% population
+    big_distributions = {}
+    for maximum in distribution_population:
+        if distribution_population[maximum] >= 0.2:
+            big_distributions[maximum] = [maximum]
+    
+    # Merge small distributions with the big ones
+    ang_tools.merge_small_with_big(distribution_population,big_distributions, hist)
+    
+    
+    # Merge big "close" distributions along with their "small" distributions
+    merged_big_distributions = ang_tools.merge_big_with_big_by_closeness(big_distributions, distribution_population, closeness_threshold)
 
-def center_angles_in_most_dense_peak(cls, angles, hist_bin_size = 0.1):
-    """
-    Improved angle preconditioning
-    """
+    # "Mount" the real distributions and order them by population (bigger go first)
+    distributions = ang_tools.get_ordered_distributions(merged_big_distributions, distribution_ranges, hist)
     
-    hist, boundaries = numpy.histogram(angles, 
-                                       bins=int((math.pi*2)/ hist_bin_size),
-                                       range = (-math.pi, math.pi))
-
-    print "***********************" 
-    print "***********************"
-    print "***********************"       
-    print hist
-    print "***********************"
-    
-    # Detect base value
-    min_val = numpy.min(hist)
-    
-    # Shift histogram down
-    shift_hist = hist - min_val
-    # Detect zeros
-    min_indices = numpy.where(shift_hist == 0)[0]    
-    
-    # Remove 0s that have 0s around
-    to_be_removed = []
-    for i in min_indices:
-        left = (i-1) % len(hist)
-        right = (i+1) %len(hist)
-        if shift_hist[left] == 0 and shift_hist[right]==0:
-            to_be_removed.append(i)
-            
-    # Suavizar hasta que solo quede un pico
-    
-    
-    min_indices = numpy.array(sorted(list(set(min_indices)-set(to_be_removed))))
-    
-    # We circularly calculate the densities between zeros
-    densities = []
-    for  i in range(len(min_indices)-1):
-        d = numpy.sum(hist[min_indices[i]:min_indices[i+1]+1])
-        densities.append((d, min_indices[i], min_indices[i+1]))
-    
-    # Last can cross boundaries
-    d = numpy.sum(hist[min_indices[-1]:len(min_indices)])+ numpy.sum(hist[0:min_indices[0]])
-    densities.append((d, min_indices[-1], min_indices[0]))
-    
-    # Pick the biggest zone and center the angles there
-    most_dense_zone =  max(densities)
-    
-    # Then pick the peak :D
-    left, right = most_dense_zone[1], most_dense_zone[2]+1
-    if left > right:
-        left_peak_value = numpy.max(hist[0:right])
-        right_peak_value = numpy.max(hist[left:len(hist)])
-        if left_peak_value > right_peak_value:
-            peak_index = hist[0:right].tolist().index(left_peak_value)
-        else:
-            peak_index = hist[left:len(hist)].tolist().index(right_peak_value)
-    else:
-        peak_max = numpy.max(hist[left:right])
-        peak_index = left + hist[left:right].tolist().index(peak_max)
-        
-    peak_value = (boundaries[peak_index] + boundaries[peak_index+1]) / 2.
-    # Now center everything in that value
-    shifted_angles = angles - peak_value
-    # And put the angles that are out of boundaries in the same -pi, pi range
-    corrected_angles = []
-    for angle in shifted_angles:
-        corrected_angles.append(to_pi_mpi_range(angle))
-    
-    hist, _ = numpy.histogram(corrected_angles, 
-                              bins=int((math.pi*2)/ hist_bin_size),
-                              range = (-math.pi, math.pi))
-    print hist
-    print "**********************"
-    return numpy.array(corrected_angles)
-
+    return distributions
 
 if __name__ == '__main__':
-    trajectory_path = sys.argv[1]
     
-    structure = parsePDB(trajectory_path)
-    all_angles = []
-    for i, coords in enumerate(structure.getCoordsets()):
-        angles = []
-        structure.setCoords(coords)
-        hv = structure.getHierView()
-        for residue in hv.iterResidues():
-            try:
-                angles.append(calcPhi(residue, radian=True))
-            except:
-                angles.append(0)
-            try:
-                angles.append(calcPsi(residue, radian=True))
-            except:
-                angles.append(0)
-        all_angles.append(angles)
-    all_angles = numpy.array(all_angles)
-    numpy.savetxt(sys.argv[2]+".ang", all_angles)
+    all_angles = numpy.loadtxt(sys.argv[1])
     
-    # Shift all angles in order to avoid having them in boundaries
-    var_angles = []
-    all_shifted_angles = []
-    for angle_observations in all_angles.T:
-        shifted_angles = pca.dpca.dPCA.center_angles_in_most_dense_peak(angle_observations)
-        all_shifted_angles.append(shifted_angles)
-        _, var_a = pca.dpca.circular_mean_and_variance(shifted_angles)
-        var_angles.append(var_a)
+    HIST_BIN_SIZE = 0.1
+    JUMP_SIZE = 15
+    CLOSENESS_THRESHOLD = 10
     
-    numpy.savetxt(sys.argv[2]+".ang.sh", all_angles)
-    numpy.savetxt(sys.argv[2], var_angles)
+    all_variances = []
+    max_num_cols = 0
+    for i, torsion_observations in enumerate(all_angles.T[3:]):
+        try:
+            variances = []
+            distributions = calculate_distributions(torsion_observations,HIST_BIN_SIZE,JUMP_SIZE,CLOSENESS_THRESHOLD)
+            for distribution in distributions:
+                index_range, angle_range = ang_tools.get_angular_ranges(distribution, -math.pi, HIST_BIN_SIZE)
+                angles = ang_tools.get_distribution_angles(torsion_observations, angle_range)
+                shifted_angles, shift = ang_tools.shift_angular_distribution_to_0_2pi(angles, distribution, index_range, HIST_BIN_SIZE)
+                ang_variance = circular_variance(shifted_angles)
+                variances.append(ang_variance)
+            all_variances.append(variances)
+            max_num_cols = max(len(variances),max_num_cols)
+        except:
+            all_variances.append([0])
+
+    padded_variances = numpy.zeros((len(all_angles.T), max_num_cols+1))
+    for i, dist_vars in enumerate(all_variances):
+        padded_variances[i][0] = i
+        for j, var in enumerate(dist_vars):
+            padded_variances[i][j+1] = var
+    numpy.savetxt("variances", padded_variances, fmt="%.5f")
+    
+    
