@@ -24,7 +24,8 @@ class TestAngularStats(unittest.TestCase):
         data_folder = trajectory_comparison.data.__path__[0]
         all_angles = numpy.loadtxt(os.path.join(data_folder, "pro_noh_md.pdb.rot.ang"))
         
-        for observation in range(3,100): #len(all_angles)):
+        [32] # obs partida
+        for observation in [32]: #range(3,100): #len(all_angles)):
             
             print "OBSERVATION", observation
             hist_bin_size = 0.1

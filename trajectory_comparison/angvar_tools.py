@@ -176,7 +176,6 @@ def merge_big_with_big_by_closeness(big_distributions, distribution_population, 
                     mergeable[j] = False
     return merged_big_distributions
 
-
 def get_ordered_distributions(merged_big_distributions, distribution_ranges, hist):
     tmp_distributions = []
     for maximum in merged_big_distributions:
@@ -192,7 +191,6 @@ def get_ordered_distributions(merged_big_distributions, distribution_ranges, his
     for i in range(len(tmp_distributions)):
         distributions.append(tmp_distributions[i][1])
     return distributions
-
 
 def find_first_zero(distribution, starting_position, direction):
     index = starting_position
@@ -254,6 +252,11 @@ def shift_angular_distribution_to_0_2pi(distribution_angles, distribution, dist_
     #maximum_index = distribution.index(max(distribution))
     shift = -math.pi + float(dist_limits[0])*bin_size
     print "SHIFT", shift
-    shifted_angles = numpy.array(distribution_angles) - shift
+    shifted_angles = []
+    for angle in distribution_angles:
+        if angle >= 0:
+            shifted_angles.append(angle - shift)
+        else:
+            shifted_angles.append(angle - shift + 2*math.pi)
     return shifted_angles, shift
     
