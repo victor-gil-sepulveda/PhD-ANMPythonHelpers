@@ -77,6 +77,12 @@ def execute_pipeline(parameters):
             command = "python %(script_location)s %(reference)s %(input)s save"%(parameters["compare"]["rmsf"])
             print "Issuing >> ", command
             os.system(command)
+            
+        if "energy" in parameters["compare"]:
+            parameters["compare"]["energy"]["input"] = "%s.ener"%(parameters["merge"]["merged_file"])
+            command = "python %(script_location)s %(input)s %(skip)d"%(parameters["compare"]["energy"]) 
+            print "Issuing >> ", command
+            os.system(command)
 
 if __name__ == '__main__':
     

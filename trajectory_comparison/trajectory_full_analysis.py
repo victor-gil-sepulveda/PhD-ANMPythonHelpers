@@ -106,6 +106,9 @@ def calculate_sasa_and_rgyr_with_vmd(pdb_file, sasa_outfile, rgyr_outfile, vmd_s
     
     numpy.savetxt(sasa_outfile, sasa, "%.4f")
     numpy.savetxt(rgyr_outfile, rgyr, "%.4f")
+    
+# def calculate_torsional_variation(pdb_file, outfile):
+    
 
 def analyze_trajectory(traj_path, 
                        do_sasa, do_sasa_vmd, 
@@ -138,7 +141,7 @@ def analyze_trajectory(traj_path,
                                 vmd_selection)
         
     if do_rgyr_vmd and not do_sasa_vmd:
-        calculate_sasa_with_vmd(traj_path, 
+        calculate_rgyr_with_vmd(traj_path, 
                                 '%s.%s.rgyr'%(traj_path, vmd_selection.replace(" ","_")), 
                                 vmd_selection)
     
@@ -182,12 +185,18 @@ def analyze_trajectory(traj_path,
             total, accepted, energies = process_report_file(report_file)
             all_total.append(total)
             all_accepted.append(accepted)
-            all_energies.extend(energies)
+            all_energies.append(list(energies))
         total = numpy.sum(all_total)
         accepted = numpy.sum(all_accepted)
         acceptance = accepted / total
         numpy.savetxt(traj_path+'.acc', [acceptance], fmt = "%.4f ")
-        numpy.savetxt(traj_path+'.ener', all_energies)
+        
+        energy_handler = open(traj_path+'.ener', "w")
+        for i in range(len(all_energies)):
+            for j in range(len(all_energies[i])):
+                energy_handler.write("%f\n"%all_energies[i][j])
+            energy_handler.write("###\n")
+            
     
     if disp_logfile != "":
         handler = open(disp_logfile)
