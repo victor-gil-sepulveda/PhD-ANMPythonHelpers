@@ -14,8 +14,9 @@ def get_folder_name(t,disp, it = ""):
     else:
         return "%s_%s"%(get_folder_name(t, disp),it)
 
-if __name__ == '__main__':
-    ts_and_disp_file = sys.argv[1]
+
+def get_folders_for_analysis(temp_and_disp_file):
+    ts_and_disp_file = temp_and_disp_file
     lines = open(ts_and_disp_file,"r").readlines()
     temperatures = lines[0].split()
     displacements = lines[1].split()
@@ -24,22 +25,24 @@ if __name__ == '__main__':
         iterations = lines[2].split()
     except:
         use_iterations = False
-    
-    template_parameters_file = sys.argv[2]
-    parameters =  tools.load_control_json(template_parameters_file)
-    
     folders = []
     for T in temperatures:
         for disp in displacements:
             if use_iterations:
                 for it in iterations:
-                    folders.append(get_folder_name(T, disp, it))
+                    folders.append( (get_folder_name(T, disp, it),(T,disp,it)))
             else:
-                folders.append( get_folder_name( T, disp))
+                folders.append((get_folder_name( T, disp),(T,disp,-1)))
+    return folders
+
+if __name__ == '__main__':
+    folders = get_folders_for_analysis(sys.argv[1])
     
+    template_parameters_file = sys.argv[2]
+    parameters =  tools.load_control_json(template_parameters_file)
     
     BASE_PATH = "Results"
-    for folder in folders:
+    for folder, _ in folders:
         print "Executing pipeline for folder: ", folder
         
         # Change script
