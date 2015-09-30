@@ -163,8 +163,10 @@ def analyze_trajectory(traj_path,
 #                                     }])
 #         rmsf_array = rmsf(data.structure_ensemble)
         import prody
-        
-        rmsf_array = ca_rmsf(prody.proteins.pdbfile.parsePDB(traj_path, subset='ca'))
+        print "Loading structure..."
+        pdb = prody.proteins.pdbfile.parsePDB(traj_path, subset='ca')
+        print "Calculating ..."
+        rmsf_array = ca_rmsf(pdb)
         numpy.savetxt(traj_path+'.rmsf', rmsf_array)
 
     if data is not None:
