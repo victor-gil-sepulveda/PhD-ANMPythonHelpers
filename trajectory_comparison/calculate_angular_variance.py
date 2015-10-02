@@ -85,6 +85,6 @@ if __name__ == '__main__':
         padded_variances[i][0] = i
         for j, var in enumerate(dist_vars):
             padded_variances[i][j+1] = var
-    numpy.savetxt("variances", padded_variances, fmt="%.5f")
+    numpy.savetxt("%s.var"%sys.argv[1], padded_variances, fmt="%.5f")
     
     
