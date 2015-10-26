@@ -21,11 +21,11 @@ if __name__ == '__main__':
             try:
                 angles.append(calcPhi(residue, radian=True))
             except:
-                angles.append(0)
+                angles.append(0.)
             try:
                 angles.append(calcPsi(residue, radian=True))
             except:
-                angles.append(0)
+                angles.append(0.)
         all_angles.append(angles)
     all_angles = numpy.array(all_angles)
-    numpy.savetxt(sys.argv[1]+".ang", all_angles)
+    numpy.savetxt(sys.argv[1]+".ang", all_angles, fmt = "%.4f")

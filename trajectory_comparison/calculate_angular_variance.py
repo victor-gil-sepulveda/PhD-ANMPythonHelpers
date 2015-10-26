@@ -80,10 +80,12 @@ if __name__ == '__main__':
         except:
             all_variances.append([0])
 
+    print "max_columns", max_num_cols+1
     padded_variances = numpy.zeros((len(all_angles.T), max_num_cols+1))
     for i, dist_vars in enumerate(all_variances):
         padded_variances[i][0] = i
         for j, var in enumerate(dist_vars):
+            #print i,j
             padded_variances[i][j+1] = var
     numpy.savetxt("%s.var"%sys.argv[1], padded_variances, fmt="%.5f")
     
