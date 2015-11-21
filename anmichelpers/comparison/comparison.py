@@ -34,14 +34,25 @@ def rmsip(first_mode_range, second_mode_range):
     Pedro Lopez-Romero, Dmitry Lupyan, Daniel Zerbino and Angel R. Ortiz
     Biophys J. 2005 Feb; 88(2): 1291-1299.
     
+    Must vary between 0 and 1
+    http://www.biomedcentral.com/1471-2105/15/399
     """
     D = len(first_mode_range)
     K = len(second_mode_range)
-    
     rmsip_val = 0.
     for i in range(D):
         for j in range(K):
-            print " REPASAAAR!!!!!!!!!!"
-            o = numpy.dot(first_mode_range[i], second_mode_range[j])
-            rmsip_val += o*o
-    return math.sqrt(rmsip_val / D)
+            ovp = overlap(first_mode_range[i], second_mode_range[j])
+            rmsip_val += ovp*ovp
+    return math.sqrt(rmsip_val / float(D))
+
+def degree_of_collectivity(mode):
+    """
+    http://peds.oxfordjournals.org/content/14/1/1.long
+    """
+    alpha = None
+    # Calculate "displacements of the mode"
+    
+    # Calculate alpha
+    
+    # Calculate the degree of collectivity
