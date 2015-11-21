@@ -12,7 +12,10 @@ def calculate_rmsds(coord_set_ref, coord_set):
     number_of_steps = min(coord_set_ref.shape[0],coord_set.shape[0])
     number_of_coords = coord_set_ref.shape[1]
     
-    print coord_set_ref.shape, coord_set.shape
+    print "Calculating RMSDs"
+    print "\t- Number of steps:",number_of_steps
+    print "\t- Number of coordinates:",number_of_coords
+    print "\t- Shapes (ref/other):", coord_set_ref.shape, coord_set.shape
     
     rmsds = []
     for i in range(number_of_steps):
