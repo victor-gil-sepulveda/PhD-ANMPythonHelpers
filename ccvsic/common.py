@@ -50,6 +50,8 @@ def prepare_workspace(base_data):
 
 def run_pele_in_folder( control_file_dict, folder, experiment_data, test = False, sleep_time = 10, return_command = False):
     create_directory(folder)
+    os.system("ln -s %s/Data %s"%(experiment_data["workspace"], folder ))
+    os.system("ln -s %s/Documents %s"%(experiment_data["workspace"], folder ))
     create_directory(os.path.join(folder,"info"))
     control_file_path = os.path.join(folder,'control.json')
     out_file_path = os.path.join(folder,'out')
