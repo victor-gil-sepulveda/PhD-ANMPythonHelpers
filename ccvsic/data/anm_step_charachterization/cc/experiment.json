@@ -9,7 +9,7 @@
     				"path": "/home/victor/git/PhD-ANMPythonHelpers/ccvsic/data/anm_step_charachterization/test_data/Documents",
     				"action" : "COPY"
     },
-    "control_file_template": "/home/victor/git/PhD-ANMPythonHelpers/ccvsic/data/anm_step_charachterization/cc/template.json",
+    "control_file_template": "/home/victor/git/PhD-ANMPythonHelpers/ccvsic/data/anm_step_charachterization/templates/cc_template.json",
     "initial_structure": "/home/victor/git/PhD-ANMPythonHelpers/ccvsic/data/anm_step_charachterization/test_data/protein.pdb",
     "prefix": "CC",
     "number_of_processes": 4,

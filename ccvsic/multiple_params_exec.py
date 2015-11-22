@@ -10,11 +10,16 @@ from multiprocessing.pool import Pool
 from ccvsic.common import set_parameter_value, pair_parameter_values,\
     wait_for_results_and_close, run_pele_in_folder, change_output_path_parameters,\
     prepare_workspace,load_control_json
+from optparse import OptionParser
     
 if __name__ == '__main__':
-    data_path = ccvsic.__path__[0]
-    test = os.path.join(data_path, "data", "anm_step_charachterization", "cc", "experiment.json")
-    experiment_details = load_control_json(test)
+    
+    parser = OptionParser()
+    parser.add_option("-e", dest="exp_details_path")
+    parser.add_option("--greesy", dest="greesy_output")
+    (options, args) = parser.parse_args()
+    
+    experiment_details = load_control_json(options.exp_details_path)
     control_file_template = load_control_json(experiment_details["control_file_template"])
     
     prepare_workspace(experiment_details)
