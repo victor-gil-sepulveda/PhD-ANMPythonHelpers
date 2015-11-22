@@ -16,7 +16,7 @@ if __name__ == '__main__':
     
     parser = OptionParser()
     parser.add_option("-e", dest="exp_details_path")
-    parser.add_option("--greesy", dest="greesy_output")
+    parser.add_option("--greasy", dest="greasy")
     (options, args) = parser.parse_args()
     
     experiment_details = load_control_json(options.exp_details_path)
@@ -39,7 +39,14 @@ if __name__ == '__main__':
             set_parameter_value(experiment_details["parameter_paths"][p], control_file_template, v)
         
         #control_file_dict, folder, experiment_data, test = False, sleep_time = 10, return_command = False
-        results.append(pool.apply_async(run_pele_in_folder, (control_dict, folder, experiment_details, False, 5, False)))
+        if options.greasy is None:
+            results.append(pool.apply_async(run_pele_in_folder, (control_dict, folder, experiment_details, False, 5, False)))
+        else:
+            results.append("cd %s;"%(experiment_details["workspace"]) + run_pele_in_folder(control_dict, folder, experiment_details, True, 0, True))
     
-    wait_for_results_and_close(pool, results, 60)
+    if options.greasy is None:
+        wait_for_results_and_close(pool, results, 60)
+    else:
+        open(options.greasy, "w").write("\n".join(results))
+            
     
