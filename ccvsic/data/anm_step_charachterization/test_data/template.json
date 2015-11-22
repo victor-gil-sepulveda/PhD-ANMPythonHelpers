@@ -1,0 +1,121 @@
+{
+  "licenseDirectoryPath": "/home/kkqt498/PROGRAMS/PELE/license",
+    "simulationLogPath": "2000_0_5_50/log.txt",
+    "Initialization": {
+        "ForceField": "OPLS2005",
+        "Complex":
+            {
+		"files": [{"path": "2000_0_5_50/pro_noh.fixed.pdb"}]
+	    },
+        "Solvent": {
+            "solventType": "VDGBNP",
+            "useDebyeLength": true,
+            "ionicStrength": 0.1
+        }
+    },
+    "commands": [
+        {
+            "commandType": "peleSimulation",
+            "RandomGenerator": {
+                "seed": 190931
+            },
+            "PELE_Output": {
+                "reportPath": "2000_0_5_50/report",
+                "trajectoryPath": "2000_0_5_50/trajectory.pdb",
+                "savingMode": "savingTrajectory",
+                "initialPdbPath": "2000_0_5_50/initial.pdb",
+                "finalPdbPath": "2000_0_5_50/final.pdb"
+            },
+            "PELE_Parameters": {
+                "numberOfPeleSteps" : 100000,
+                "temperature": 2000,
+                "anmFrequency" : 1,
+                "minimizationFrequency" : 1,
+                "sideChainPredictionFrequency" : 1,
+		"numberOfTopSideSelectedLinks" : 20
+            },
+            "ANM": {
+		  	"algorithm": "INTERNALS",
+                "options": {
+                    "pickingCase": "RANDOM_MODE",
+                    "modesMixingOption": "mixMainModeWithOthersModes",
+                    "directionGeneration": "random",
+                    "initialDirection": 1.0,
+                    "moveMagnitudeGeneration": "noRandom"
+                },
+                "parameters": {
+                	
+					"mainModeWeightForMixModes": 0.7,
+					"numberOfModes": 6,
+			        	"eigenUpdateFrequency": 500,
+			    		"modesChangeFrequency": 6,
+					
+
+					"constantForHessian": 1.0,
+					"cutoff":9,
+					"useConstraints": true,
+					"steeringForce": 300,
+					
+
+					"cycleMoverType": "MONTECARLO",
+			    		"cycleCheckTemperature": 3000,
+
+					"icMoverType": "GEOMETRIC",
+					"displacementFactor": 0.5,
+			    		"numInternalIterations": 50,
+			    	
+					"icMoverRelaxType": "RELAX_SD_MIN_CLASHES",
+					"percentSideChains":10,
+					"inRelaxSteps": 10
+                },
+                "anmMinimizer": {
+                    "algorithm": "TruncatedNewton",
+                    "parameters": {
+			    		"MaximumMinimizationIterations": 1,
+	                    	"MaximumNewtonIterations": 100,
+	                    	"MinimumRMS": 0.04,
+	                    	"nonBondingListUpdatedEachMinStep": true,
+			    		"alphaUpdated": false
+                    }
+            	}
+            },
+            "SideChainPrediction": {
+                "sideChainMinimizer": {
+                    "algorithm": "TruncatedNewton",
+                    "parameters": {
+	                    "MaximumMinimizationIterations": 1,
+	                    "MaximumNewtonIterations": 65,
+	                    "MinimumRMS": 0.04,
+	                    "nonBondingListUpdatedEachMinStep": true,
+	                    "alphaUpdated": true,
+                            "sgbUpdated": true
+                    }
+                },
+                "algorithm": "zhexin",
+                "parameters": {
+                    "randomize": false,
+                    "numberOfIterations": 1
+                 }
+            },
+            "includeInMinimization": {
+                 "chains": "all"
+            },
+            "Minimizer": {
+                "algorithm": "TruncatedNewton",
+                "parameters": {
+                    "MaximumMinimizationIterations": 1,
+                    "MaximumNewtonIterations": 65,
+                    "MinimumRMS": 0.1,
+                    "nonBondingListUpdatedEachMinStep": true,
+                    "alphaUpdated": true,
+		    "sgbUpdated": true
+                }
+            },
+            "PeleTasks": [
+	        {
+                 
+			}
+			]
+	    }
+    ]
+}

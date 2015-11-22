@@ -1,0 +1,98 @@
+{
+  "Initialization": {
+      "ForceField": "OPLS2005",
+      "Complex": {
+          "files": [
+              {
+                  "path": ""
+              }
+          ]
+        },
+        "Solvent": {
+          "solventType": "OBC"
+        }
+    },
+    "commands": [
+        {
+            "commandType": "peleSimulation",
+            "RandomGenerator": {
+                "seed": 333320
+            },
+            "PELE_Output": {
+                "savingFrequencyForAcceptedSteps": 1,
+                "savingMode": "savingTrajectory",
+                "reportPath": "report",
+                "trajectoryPath": "trajectory.pdb"
+            },
+            "PELE_Parameters": {
+                "anmFrequency": 1,
+                "sideChainPredictionFrequency": 1,
+                "numberOfTopSideSelectedLinks": 20,
+                "minimizationFrequency": 1,
+                "numberOfPeleSteps": 100000,
+                "temperature": 3000
+            },
+            "ANM": {
+                "algorithm": "ALPHACARBONS",
+                "anmMinimizer": {
+                    "algorithm": "TruncatedNewton",
+                    "parameters": {
+                        "MaximumMinimizationIterations": 1,
+                        "MaximumNewtonIterations": 65,
+                        "MinimumRMS": 0.05,
+                        "alphaUpdated": false,
+                        "nonBondingListUpdatedEachMinStep": true
+                    }
+                },
+                "options": {
+                    "directionGeneration": "random",
+                    "modesMixingOption": "mixMainModeWithOthersModes",
+                    "pickingCase": "RANDOM_MODE"
+                },
+                "parameters": {
+                    "displacementFactor": 0.66,
+                    "eigenUpdateFrequency": 10000,
+                    "mainModeWeightForMixModes": 0.7,
+                    "modesChangeFrequency": 6,
+                    "numberOfModes": 10,
+                    "relaxationSpringConstant": 0.1,
+                    "constantForHessian": 1.0,
+				    "cutoff":9,
+				    "modesSavePath":"",
+                    "steeringForce": 20
+                }
+            },
+            "SideChainPrediction": {
+                "algorithm": "zhexin",
+                "parameters": {
+                    "randomize": false,
+                    "numberOfIterations": 1
+                },
+                "sideChainMinimizer" : {
+			          "algorithm" : "TruncatedNewton",
+			          "parameters" : { "MinimumRMS" : 0.1, "alphaUpdated" : false, "nonBondingListUpdatedEachMinStep" : true }
+			     }
+                
+            },
+            "Minimizer": {
+                "algorithm": "TruncatedNewton",
+                "parameters": {
+                    "MaximumMinimizationIterations": 1,
+                    "MaximumNewtonIterations": 65,
+                    "MinimumRMS": 0.05,
+                    "nonBondingListUpdatedEachMinStep": true,
+                    "alphaUpdated": true,
+                    "sgbUpdated": true
+                }
+            },
+            "PeleTasks": [
+                {
+                "exitConditions":
+					[
+					"numberOfAcceptedPeleSteps = 200"
+					]
+                }
+            ]
+        }
+    ]
+}

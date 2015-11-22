@@ -4,7 +4,7 @@ Created on 9/2/2015
 @author: victor
 """
 
-import  numpy
+import numpy
 import math
 import prody
 try:
@@ -27,7 +27,7 @@ def norm(v):
         norms = []
         for i in range(len(v)):
             norms.append(norm(v[i]))
-        return norms
+        return numpy.array(norms)
     else:
         return None
 
