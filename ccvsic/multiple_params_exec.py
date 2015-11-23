@@ -17,6 +17,8 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-e", dest="exp_details_path")
     parser.add_option("--greasy", dest="greasy")
+    parser.add_option("--mpi", action="store_true", default=False, dest="mpi")
+    
     (options, args) = parser.parse_args()
     
     experiment_details = load_control_json(options.exp_details_path)
@@ -25,6 +27,9 @@ if __name__ == '__main__':
     prepare_workspace(experiment_details)
     set_parameter_value("Initialization.Complex.files.path", control_file_template, 
                         os.path.join(experiment_details["workspace"],os.path.basename(experiment_details["initial_structure"])))
+    
+    if "license" in experiment_details:
+        control_file_template["licenseDirectoryPath"] =  experiment_details["license"] 
     
     pool = Pool(experiment_details["number_of_processes"])
     results = []
@@ -42,8 +47,12 @@ if __name__ == '__main__':
         if options.greasy is None:
             results.append(pool.apply_async(run_pele_in_folder, (control_dict, folder, experiment_details, False, 5, False)))
         else:
-            results.append("cd %s;"%(experiment_details["workspace"]) + run_pele_in_folder(control_dict, folder, experiment_details, True, 0, True))
-    
+            if not options.mpi:
+                results.append("cd %s;"%(experiment_details["workspace"]) + run_pele_in_folder(control_dict, folder, experiment_details, True, 0, True))
+            else:
+                results.append("cd %s;"%(experiment_details["workspace"]) + 
+                               "mpirun -np %s "%(experiment_details["number_of_processes"])+
+                               run_pele_in_folder(control_dict, folder, experiment_details, True, 0, True))
     if options.greasy is None:
         wait_for_results_and_close(pool, results, 60)
     else:

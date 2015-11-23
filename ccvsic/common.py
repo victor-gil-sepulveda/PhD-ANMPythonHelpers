@@ -44,9 +44,11 @@ def prepare_workspace(base_data):
     if base_data["PELE_data"]["action"] == "LINK":
         os.system("ln -s %s %s"%(base_data["PELE_data"]["path"], base_data["workspace"]))
     if base_data["PELE_docs"]["action"] == "COPY":
-        os.system("cp -r %s %s"%(base_data["PELE_docs"]["path"], base_data["workspace"]))
+        os.system("cp -r %s %s"%(base_data["PELE_docs"]["path"], 
+                                           os.path.join(base_data["workspace"],"Documents")))
     if base_data["PELE_docs"]["action"] == "LINK":
-        os.system("ln -s %s %s"%(base_data["PELE_docs"]["path"], base_data["workspace"]))
+        os.system("ln -s %s %s"%(base_data["PELE_docs"]["path"], 
+                                           os.path.join(base_data["workspace"],"Documents")))
 
 def run_pele_in_folder( control_file_dict, folder, experiment_data, test = False, sleep_time = 10, return_command = False):
     current_dir = os.getcwd()
