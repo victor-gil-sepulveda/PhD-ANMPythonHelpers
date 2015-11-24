@@ -15,7 +15,7 @@ def pair_parameter_values(parameter_keys, parameters):
     key1, key2 = parameter_keys[0], parameter_keys[1]
     for vals1 in parameters[key1]:
         for vals2 in parameters[key2]:
-            yield (key1, vals1),(key2,vals2)
+            yield ((key1, vals1),(key2,vals2))
 
 def set_parameter_value(key_description, param_dict, value):
     keys = key_description.split(".")

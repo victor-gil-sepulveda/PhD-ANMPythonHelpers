@@ -39,9 +39,9 @@ if __name__ == '__main__':
                                             experiment_details["parameter_abbv"][p2],v2)
         control_dict = copy.deepcopy(control_file_template)
         folder = os.path.join(experiment_details["workspace"], folder_name)
-        change_output_path_parameters(control_file_template, experiment_details["common_changeable_paths"], folder)
+        change_output_path_parameters(control_dict, experiment_details["common_changeable_paths"], folder)
         for p,v in [(p1,v1),(p2,v2)]:
-            set_parameter_value(experiment_details["parameter_paths"][p], control_file_template, v)
+            set_parameter_value(experiment_details["parameter_paths"][p], control_dict, v)
         
         #control_file_dict, folder, experiment_data, test = False, sleep_time = 10, return_command = False
         if options.greasy is None:
@@ -56,6 +56,6 @@ if __name__ == '__main__':
     if options.greasy is None:
         wait_for_results_and_close(pool, results, 60)
     else:
-        open(options.greasy, "w").write("\n".join(results))
+        open(options.greasy, "w").write("\n".join(results)+"\n")
             
     
