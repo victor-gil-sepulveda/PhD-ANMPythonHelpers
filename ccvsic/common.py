@@ -10,6 +10,7 @@ import time
 import sys
 import re
 import errno
+import numbers
 
 def pair_parameter_values(parameter_keys, parameters):
     key1, key2 = parameter_keys[0], parameter_keys[1]
@@ -35,6 +36,7 @@ def set_parameter_value(key_description, param_dict, value):
             tmp_dic = val
         
     tmp_dic[keys[-1]] = value
+
 
 def prepare_workspace(base_data):
     create_directory(base_data["workspace"])
@@ -138,3 +140,11 @@ def create_directory(directory_path, ensure_writability = False):
     
     return False
 
+def parameter_value_to_string(val):
+    if isinstance(val, basestring):
+        return val
+    else:
+        if isinstance(val, numbers.Integral):
+            return "%d"%val
+        else:
+            return "%.2f"%val

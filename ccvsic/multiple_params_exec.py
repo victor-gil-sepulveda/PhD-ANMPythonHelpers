@@ -9,7 +9,7 @@ import ccvsic
 from multiprocessing.pool import Pool
 from ccvsic.common import set_parameter_value, pair_parameter_values,\
     wait_for_results_and_close, run_pele_in_folder, change_output_path_parameters,\
-    prepare_workspace,load_control_json
+    prepare_workspace,load_control_json, parameter_value_to_string
 from optparse import OptionParser
     
 if __name__ == '__main__':
@@ -34,9 +34,9 @@ if __name__ == '__main__':
     pool = Pool(experiment_details["number_of_processes"])
     results = []
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
-        folder_name = "%s_%s_%.2f_%s_%.2f"%(experiment_details["prefix"],
-                                            experiment_details["parameter_abbv"][p1],v1,
-                                            experiment_details["parameter_abbv"][p2],v2)
+        folder_name = "%s_%s_%s_%s_%s"%(experiment_details["prefix"],
+                                            experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
+                                            experiment_details["parameter_abbv"][p2], parameter_value_to_string(v2))
         control_dict = copy.deepcopy(control_file_template)
         folder = os.path.join(experiment_details["workspace"], folder_name)
         change_output_path_parameters(control_dict, experiment_details["common_changeable_paths"], folder)

@@ -1,0 +1,55 @@
+{
+    "workspace": "/home/victor/Desktop/CC_charachterization/disp_vs_steering",
+    "PELE_exec_cmd": "cat",
+    "PELE_data": {
+    				"path" : "/home/victor/git/PhD-ANMPythonHelpers/ccvsic/data/anm_step_charachterization/test_data/Data",
+    				"action" : "LINK"
+    },
+    "PELE_docs": { 
+    				"path": "/home/victor/git/PhD-ANMPythonHelpers/ccvsic/data/anm_step_charachterization/test_data/Documents",
+    				"action" : "LINK"
+    },
+    "control_file_template": "/home/victor/git/PhD-ANMPythonHelpers/ccvsic/data/anm_step_charachterization/templates/cc_template.json",
+    "initial_structure": "/home/victor/git/PhD-ANMPythonHelpers/ccvsic/data/anm_step_charachterization/test_data/protein.pdb",
+    "prefix": "CC",
+    "number_of_processes": 4,
+    "check": [
+        "displacementFactor",
+        "steeringForce"
+    ],
+    "parameter_values": {
+        "displacementFactor": [
+            0.25,
+            0.66
+        ],
+        "steeringForce": [
+            20,
+            40
+        ],
+        "rmsg": [
+            0.1,
+            0.05,
+            0.036,
+            0.023,
+            0.01
+        ]
+    },
+    "parameter_paths": {
+        "displacementFactor": "commands.ANM.parameters.displacementFactor",
+        "steeringForce": "commands.ANM.parameters.steeringForce",
+        "rmsg": "commands.ANM.anmMinimizer.parameters.MinimumRMS"
+    },
+    "parameter_abbv": {
+        "displacementFactor": "dispFact",
+        "steeringForce": "steerF",
+        "rmsg": "rmsg"
+    },
+    "common_changeable_paths": {
+        "simulationLogPath": "log.txt",
+        "commands.PELE_Output.reportPath": "report",
+        "commands.PELE_Output.trajectoryPath": "trajectory.pdb",
+        "commands.PELE_Output.initialPdbPath": "initial.pdb",
+        "commands.PELE_Output.finalPdbPath": "final.pdb",
+        "commands.ANM.parameters.modesSavePath": "info"
+    }
+}
