@@ -11,6 +11,35 @@ import sys
 import re
 import errno
 import numbers
+import numpy
+from anmichelpers.tools.tools import norm
+from pyRMSD.RMSDCalculator import RMSDCalculator
+
+class LineParser:
+    def __init__(self, tag, position, conversion, split_token = None):
+        self.data = []
+        self.tag = tag
+        self.tag_len = len(tag)
+        self.position = position
+        self.split_token = split_token
+        self.conversion_function = conversion
+        
+    def parse_line(self, line):
+        if line[0:self.tag_len] == self.tag:
+            try:
+                self.data.append(self.conversion_function(line.split(self.split_token)[self.position]))
+            except Exception, e:
+                print line
+                raise e
+class LineCounter:
+    def __init__(self, tag):
+        self.data = []
+        self.tag = tag
+        self.counter = 0
+        
+    def parse_line(self, line):
+        if self.tag in line:
+            self.counter = self.counter + 1
 
 def pair_parameter_values(parameter_keys, parameters):
     key1, key2 = parameter_keys[0], parameter_keys[1]
@@ -148,3 +177,24 @@ def parameter_value_to_string(val):
             return "%d"%val
         else:
             return "%.2f"%val
+        
+def process_after_perturb_max_and_mean_disp(data):
+    number_of_sets = len(data["coords_before"])
+    num_coords = len(data["coords_before"][0])
+    
+    coordsets_before = numpy.array(data["coords_before"])
+    coordsets_before = numpy.reshape(coordsets_before, (number_of_sets, num_coords/3, 3))
+    coordsets_after = numpy.array(data["coords_after"])
+    coordsets_after = numpy.reshape(coordsets_after, (number_of_sets, num_coords/3, 3))
+    
+    superimposed_translations = []
+    for i in range(number_of_sets):
+        coords = numpy.array([coordsets_before[i], coordsets_after[i]])
+        
+        calculator = RMSDCalculator(calculatorType = "QTRFIT_OMP_CALCULATOR",
+                                    fittingCoordsets = coords)
+        _, rearranged_coords = calculator.oneVsTheOthers(0, get_superposed_coordinates = True)
+        superimposed_translations.append(rearranged_coords[1]-rearranged_coords[0])
+    translations = numpy.array(superimposed_translations)
+    norms = numpy.array([norm(t) for t in translations])
+    return numpy.max(norms, axis = 1), numpy.mean(norms, axis = 1)

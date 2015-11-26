@@ -5,9 +5,9 @@ Created on Nov 21, 2015
 '''
 import os
 import copy
-import ccvsic
+import nma_algo_char
 from multiprocessing.pool import Pool
-from ccvsic.common import set_parameter_value, pair_parameter_values,\
+from nma_algo_char.common import set_parameter_value, pair_parameter_values,\
     wait_for_results_and_close, run_pele_in_folder, change_output_path_parameters,\
     prepare_workspace,load_control_json, parameter_value_to_string
 from optparse import OptionParser
