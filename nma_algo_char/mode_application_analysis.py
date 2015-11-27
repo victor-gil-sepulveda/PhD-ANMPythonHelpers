@@ -88,7 +88,7 @@ if __name__ == '__main__':
     if not options.experiment:  
         parser.error('Experiment file not given')
     
-    if not options.experiment:  
+    if not options.results_folder:  
         parser.error('Results folder not given')
     
     experiment_details = load_control_json(options.experiment)
