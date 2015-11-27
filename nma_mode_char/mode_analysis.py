@@ -32,7 +32,7 @@ if __name__ == '__main__':
                  "src_kin_2.fixed.pdb", 
                  "2lzm.fixed.pdb"]
     sizes = [(parsePDB(os.path.join("structs", pdb_file)).numResidues(), pdb_file) for pdb_file in proteins]
-    nmd_file_name = {"CC":, "IC":}
+    nmd_file_name = {"CC":"normalized_modes.1.nmd", "IC":"normalized_modes_cc.1.nmd"}
         
     all_overlaps = {}
     all_rmsip = {}
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     experiment_details = load_control_json(options.experiment)   
     eigenvectors = defaultdict(lambda: defaultdict())
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
-        for prefix in ["CC","IC"]
+        for prefix in ["CC","IC"]:
             folder_name = "%s_%s_%s_%s_%s"%(prefix,
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
                                             experiment_details["parameter_abbv"][p2], parameter_value_to_string(v2))
@@ -55,17 +55,17 @@ if __name__ == '__main__':
         cc_eigenvectors = eigenvectors["CC"][eig_key]
         ic_eigenvectors = eigenvectors["IC"][eig_key]
 
-        cum_overlaps = {}
+        cum_overlaps_ic_explained_by_cc = {}
+        cum_overlaps_cc_explained_by_ic = {}
         deg_of_collectivity_cc = {}
         deg_of_collectivity_ic = {}
         for i,mode in enumerate(ic_eigenvectors):
-            cum_overlaps[i]  = cumulative_overlap(ic_eigenvectors[i],cc_eigenvectors)
+            cum_overlaps_ic_explained_by_cc[i]  = cumulative_overlap(ic_eigenvectors[i],cc_eigenvectors[0:10])
             deg_of_collectivity_ic[i] = degree_of_collectivity(ic_eigenvectors[i], normalize=True)
             deg_of_collectivity_cc[i] = degree_of_collectivity(cc_eigenvectors[i], normalize=True)
             
-            
         all_overlaps[eig_key] = cum_overlaps
-        all_rmsip[eig_key] = [rmsip(cc_eigenvectors[0:last_freq], ic_eigenvectors[0:last_freq] for last_freq in range(2, 10))
+        all_rmsip[eig_key] = [rmsip(cc_eigenvectors[0:last_freq], ic_eigenvectors[0:last_freq] for last_freq in range(2, 10))]
         all_doc_cc[eig_key] = deg_of_collectivity_cc
         all_doc_ic[eig_key] = deg_of_collectivity_ic
     
