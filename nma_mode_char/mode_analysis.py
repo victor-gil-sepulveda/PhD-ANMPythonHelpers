@@ -32,15 +32,16 @@ if __name__ == '__main__':
     
     create_directory(options.results_folder)
     
-    data_folder = "/home/victor/Desktop/ICvsCC_movement"
-    proteins =  ["1ddt.fixed.pdb", 
-                 "1ex6.fixed.pdb", 
-                 "1ggg.fixed.pdb", 
-                 #"1su4.fixed.pdb", 
-                 "4ake.fixed.pdb", 
-                 "src_kin.fixed.pdb", 
-                 "src_kin2.fixed.pdb", 
-                 "2lzm.fixed.pdb"
+    proteins =  [
+#                  "1ddt.fixed.pdb", 
+#                  "1ex6.fixed.pdb", 
+#                  "1ggg.fixed.pdb", 
+#                  #"1su4.fixed.pdb", 
+#                  "4ake.fixed.pdb", 
+#                  "src_kin.fixed.pdb", 
+#                  "src_kin2.fixed.pdb", 
+#                  "2lzm.fixed.pdb"
+                    "2F4J.pdb"
                  ]
     
     sizes = [parsePDB(os.path.join("structs", pdb_file)).numResidues() for pdb_file in proteins]
@@ -78,17 +79,20 @@ if __name__ == '__main__':
                 except IOError, e:
                     print os.path.join(rev_nmd_file_path), "NOT FOUND"
                     eigenvectors[prefix][(v1,v2)] = None
-    all_ic_cc_overlaps = {}
-    all_cc_ic_overlaps = {}
-    all_rmsip = {}
-    all_doc_cc = {}
-    all_doc_ic = {}
+    
     # Do stuff with data
     # Max_eigen = 30
     MAX_EIGEN = 30
     for eig_key in eigenvectors["CC"]:
+        all_ic_cc_overlaps = {}
+        all_cc_ic_overlaps = {}
+        all_rmsip = {}
+        all_doc_cc = {}
+        all_doc_ic = {}
+        
         cc_eigenvectors = eigenvectors["CC"][eig_key]
         ic_eigenvectors = eigenvectors["IC"][eig_key]
+        
         if cc_eigenvectors is not None and ic_eigenvectors is not None:
             cum_overlaps_ic_explained_by_cc = {}
             cum_overlaps_cc_explained_by_ic = {}
@@ -100,81 +104,104 @@ if __name__ == '__main__':
                 deg_of_collectivity_ic.append(degree_of_collectivity(ic_eigenvectors[i], normalize=True))
                 deg_of_collectivity_cc.append(degree_of_collectivity(cc_eigenvectors[i], normalize=True))
                  
-            all_ic_cc_overlaps[eig_key] = cum_overlaps_ic_explained_by_cc
-            all_cc_ic_overlaps[eig_key] = cum_overlaps_cc_explained_by_ic
+            all_ic_cc_overlaps[eig_key[0]] = cum_overlaps_ic_explained_by_cc
+            all_cc_ic_overlaps[eig_key[0]] = cum_overlaps_cc_explained_by_ic
             all_rmsip[eig_key[0]] = [(last_freq, rmsip(cc_eigenvectors[0:last_freq], ic_eigenvectors[0:last_freq])) for last_freq in range(5, MAX_EIGEN+1,5)]
             all_doc_cc[eig_key[0]] = deg_of_collectivity_cc
             all_doc_ic[eig_key[0]] = deg_of_collectivity_ic
      
-    if options.do_plots:
-        import seaborn as sns
+            if options.do_plots:
+                import seaborn as sns
+    
+                cutt_res_folder = os.path.join(options.results_folder,"cutt_%f"%( eig_key[1]))
+                create_directory(cutt_res_folder)
+                
+                # Plot rmsip for some mode ranges limit
+                for protein in size_ordered_proteins:
+                    if protein in all_rmsip:
+                        x = [] # <- rmsip per protein
+                        y = [] # <-frequencies used in rmsip (must be the same for all of them)
+                        for last_freq,rmsip_val in all_rmsip[protein]:
+                            x.append(last_freq)
+                            y.append(rmsip_val)
+                        plt.plot(x, y, label = "%s (%d)"%(protein,size_per_protein[protein]))
+                lgd = plt.legend()
+                plt.tight_layout()
+                plt.savefig(os.path.join(cutt_res_folder,"rmsip_per_cutoff.svg"), bbox_extra_artists=(lgd,), bbox_inches='tight')
+                
+                # plot collectivities
         
-        # Plot rmsip for each cutoff limit
-#         for protein in size_ordered_proteins:
-#             if protein in all_rmsip:
-#                 x = [] # <- rmsip per protein
-#                 y = [] # <-frequencies used in rmsip (must be the same for all of them)
-#                 for last_freq,rmsip in all_rmsip[protein]:
-#                     x.append(last_freq)
-#                     y.append(rmsip)
-#                 plt.plot(x, y, label = "%s (%d)"%(protein,size_per_protein[protein]))
-#         lgd = plt.legend()
-#         plt.show()
-        
-#         plot collectivities
-
-#         def reform_data(data, cutoff):
-#             reformed_data = {"doc":[],"protein":[],"mode":[]}
-#             for protein in size_ordered_proteins:
-#                 if protein in data:
-#                     for mode in range(cutoff):
-#                         reformed_data["protein"].append(protein)
-#                         reformed_data["mode"].append(mode)
-#                         reformed_data["doc"].append(data[protein][mode])
-#             return reformed_data
-#         
-#         def plot_collectivity(data, cutoff, save_to = None):    
-#             plt.figure()
-#             reformed_data = reform_data(data, cutoff)
-#             pd_data = pd.DataFrame.from_dict(reformed_data)
-#             ax = sns.barplot(x="protein", y="doc", hue="mode", data=pd_data)
-#             for item in ax.get_xticklabels():
-#                 item.set_rotation(30)
-#             lgd = plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
-#             plt.tight_layout()
-#             if save_to is not None:
-#                 plt.savefig(save_to, 
-#                             bbox_extra_artists=(lgd,), 
-#                             bbox_inches='tight')
-#  
-#         plot_collectivity(all_doc_cc, 
-#                           save_to = os.path.join(options.results_folder, "collectivity_of_modes_cc.svg"),
-#                           cutoff = 10)
-#         plot_collectivity(all_doc_ic, 
-#                           save_to = os.path.join(options.results_folder, "collectivity_of_modes_ic.svg"),
-#                           cutoff = 10)
-#         plt.show()
-        
-        # Average collectivity for 10 modes, over different cutoffs
-        for prefix, data, pos in [("cc", all_doc_cc,(0,0)), ("ic", all_doc_ic,(0,1))]:
-            ax = plt.subplot2grid((1,2),pos)
-            for protein in size_ordered_proteins:
-                x = [] # <- frequencies used 
-                y = [] # <- avg. collectivity per protein
-                y_err = []
-                for cutoff in range(5, MAX_EIGEN+1, 5):
-                    x.append(cutoff)
-                    y.append(numpy.mean(data[protein][0:cutoff]))
-                    y_err.append(numpy.std(data[protein][0:cutoff]))
-                ax = plt.plot(x, y, label = "%s (%d)"%(protein,size_per_protein[protein]))
-                #plt.errorbar(x, y, yerr= y_err) #demasiado grandes
-                plt.ylim((0.15,0.7))
-        lgd = plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
-        plt.tight_layout()
-        plt.savefig(os.path.join(options.results_folder,"avg_collectivity.svg"), 
+                def reform_data(data, cutoff):
+                    reformed_data = {"doc":[],"protein":[],"mode":[]}
+                    for protein in size_ordered_proteins:
+                        if protein in data:
+                            for mode in range(cutoff):
+                                reformed_data["protein"].append(protein)
+                                reformed_data["mode"].append(mode)
+                                reformed_data["doc"].append(data[protein][mode])
+                    return reformed_data
+                 
+                for prefix, data, pos in [("cc", all_doc_cc,(0,0)), ("ic", all_doc_ic,(1,0))]:
+                    ax = plt.subplot2grid((2,1),pos)
+                    reformed_data = reform_data(data, cutoff = 10)
+                    pd_data = pd.DataFrame.from_dict(reformed_data)
+                    ax = sns.barplot(x="protein", y="doc", hue="mode", data=pd_data)
+                    for item in ax.get_xticklabels():
+                        item.set_rotation(30)
+                lgd = plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
+                plt.tight_layout()
+                plt.savefig(os.path.join(cutt_res_folder,"collectivity_of_modes.svg"),
                             bbox_extra_artists=(lgd,), 
                             bbox_inches='tight')
-#         plt.show()
-            
-        # Cumulative overlap plot for each mode and protein and calculation type (2 plots, modes to 10)
-        
+          
+        #         plt.show()
+                
+                # Average collectivity for 10 modes, over different cutoffs
+                for prefix, data, pos in [("cc", all_doc_cc,(0,0)), ("ic", all_doc_ic,(0,1))]:
+                    ax = plt.subplot2grid((1,2),pos)
+                    for protein in size_ordered_proteins:
+                        x = [] # <- frequencies used 
+                        y = [] # <- avg. collectivity per protein
+                        y_err = []
+                        for cutoff in range(5, MAX_EIGEN+1, 5):
+                            x.append(cutoff)
+                            y.append(numpy.mean(data[protein][0:cutoff]))
+                            y_err.append(numpy.std(data[protein][0:cutoff]))
+                        ax = plt.plot(x, y, label = "%s (%d)"%(protein,size_per_protein[protein]))
+                        #plt.errorbar(x, y, yerr= y_err) #demasiado grandes
+                        plt.ylim((0.15,0.7))
+                lgd = plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
+                plt.tight_layout()
+                plt.savefig(os.path.join(cutt_res_folder,"avg_collectivity.svg"), 
+                                    bbox_extra_artists=(lgd,), 
+                                    bbox_inches='tight')
+                    
+                # Cumulative overlap plot for each mode and protein and calculation type (2 plots, modes to 10)
+                def reform_data_for_overlap(cum_overlap):
+                    data = {"protein":[], "mode":[], "cum. overlap":[]}
+                    for protein in size_ordered_proteins:
+                        for mode in range(20):
+                            data["protein"].append(protein)
+                            data["mode"].append(mode)
+                            data["cum. overlap"].append(cum_overlap[protein][mode])
+                    return data        
+                    
+                for prefix, data, pos in [("cc", all_cc_ic_overlaps,(0,0)), ("ic", all_ic_cc_overlaps,(1,0))]:
+                    ax = plt.subplot2grid((2,1),pos)
+                    dict_data  = reform_data_for_overlap(data)
+                    df = pd.DataFrame.from_dict(dict_data)
+                    sns.barplot("protein","cum. overlap", "mode", df)
+                    avgs = []
+                    for protein in size_ordered_proteins:
+                        co_p_mode = []
+                        for mode in range(20): 
+                            co_p_mode.append(data[protein][mode])
+                        avgs.append(numpy.mean(co_p_mode))
+                    plt.plot(range(len(set(dict_data["protein"]))), avgs, marker="o", color="black")
+                    plt.ylim((0.0,1.0))
+                lgd = plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
+                plt.tight_layout()
+                plt.savefig(os.path.join(cutt_res_folder,"cumulative_overlap.svg"), 
+                                    bbox_extra_artists=(lgd,), 
+                                    bbox_inches='tight')
+                    

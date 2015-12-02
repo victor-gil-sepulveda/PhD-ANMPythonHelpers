@@ -127,11 +127,13 @@ if __name__ == '__main__':
         ## CAUTION: HARDCODED FILE ('out'). Must be extracted using the control file or experiment
         if experiment_details["prefix"] == "IC":
             relax_iters, times_conv = def_get_data_from_output_file(os.path.join(workspace, folder_name, "out"))
-            relax_iterations.append((v1,v2, numpy.mean(relax_iters[1:]), 
+            if times_conv != 0:
+                relax_iterations.append((v1,v2, numpy.mean(relax_iters[1:]), 
                                      numpy.std(relax_iters[1:]), 
                                      float(times_conv) / len(relax_iters[1:])))
+            
     
-    if experiment_details["prefix"] == "IC":
+    if experiment_details["prefix"] == "IC" and relax_iterations != []:
         save_relax_iterations(os.path.join(options.results_folder,os.path.basename(workspace),"relax.txt"),
                               relax_iterations)
            

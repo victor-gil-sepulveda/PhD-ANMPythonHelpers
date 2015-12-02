@@ -5,7 +5,7 @@ Created on 25/11/2015
 '''
 import os
 import pandas as pd
-from ccvsic.common import parameter_value_to_string
+from nma_algo_char.common import parameter_value_to_string
 import matplotlib.pyplot as plt
 import seaborn as sns
 
