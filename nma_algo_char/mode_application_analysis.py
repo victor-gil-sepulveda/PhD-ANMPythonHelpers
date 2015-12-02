@@ -8,10 +8,12 @@ import os
 from min_bias.min_bias_calc import calculate_rmsds
 from optparse import OptionParser
 from nma_algo_char.common import load_control_json, pair_parameter_values,\
-    parameter_value_to_string, create_directory, LineCounter, LineParser
+    parameter_value_to_string, create_directory, LineCounter, LineParser,\
+    MetropolisMCSimulator
 from collections import defaultdict
 from pandas.core.frame import DataFrame
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step_time):
     data = {}
@@ -101,6 +103,9 @@ if __name__ == '__main__':
     create_directory(os.path.join(options.results_folder, os.path.basename(workspace)))
     all_data = defaultdict(list)
     relax_iterations = []
+    acceptances = defaultdict(list)
+    avg_energy = defaultdict(list)
+    avg_rmsd = defaultdict(list)
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
         folder_name = "%s_%s_%s_%s_%s"%(experiment_details["prefix"],
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
@@ -116,13 +121,21 @@ if __name__ == '__main__':
             raw_data, min_len = load_ic_data(os.path.join(workspace, folder_name,"info"))
         
         # skip first frame (usually an outlayer)
-        print "DBG", min_len-1, len(modes), len(process_modes(experiment_details["prefix"], modes, 10))
-        all_data["inc_U"].extend(process_energy_differences(raw_data)[1:])
-        all_data["rmsd"].extend(process_after_perturb_rmsd(raw_data)[1:])
+        #print "DBG", min_len-1, len(modes), len(process_modes(experiment_details["prefix"], modes, 10))
+        energy_increments = process_energy_differences(raw_data)[1:]
+        all_data["inc_U"].extend(energy_increments)
+        rmsd_increments = process_after_perturb_rmsd(raw_data)[1:]
+        all_data["rmsd"].extend(rmsd_increments)
         all_data["mode"].extend(process_modes(experiment_details["prefix"], modes, 10)[1:min_len])
         all_data["time_per_step"].extend(raw_data["time_per_step"][1:min_len])
         all_data[p1].extend([v1]*(min_len-1))
         all_data[p2].extend([v2]*(min_len-1))
+        
+        mc = MetropolisMCSimulator(energy_increments)
+        acceptances[v1,v2] = mc.perform_simulation(min(100,len(energy_increments)), 
+                                                   20, 300)
+        avg_energy[v1,v2] = numpy.mean(energy_increments)
+        avg_rmsd[v1,v2] = (numpy.mean(rmsd_increments),numpy.std(rmsd_increments))
         
         ## CAUTION: HARDCODED FILE ('out'). Must be extracted using the control file or experiment
         if experiment_details["prefix"] == "IC":
@@ -146,9 +159,9 @@ if __name__ == '__main__':
         g = sns.FacetGrid(db.transpose(), col=p1, row=p2, hue="mode", 
                           sharex = True, sharey = True, margin_titles=True,
                           legend_out = True)
+       
         g.map(plt.scatter,  "rmsd", "inc_U")
         g.add_legend()
-#         plt.show()
         g.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd.svg"))
         plt.close()
         
@@ -159,4 +172,62 @@ if __name__ == '__main__':
         plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd_vs_time_hue_%s.svg"%p1))
         sns.lmplot("time_per_step", "rmsd_inc_U", db, hue= p2, fit_reg = False, scatter_kws={"alpha":0.6})
         plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd_vs_time_hue_%s.svg"%p2))
+        plt.close()
+        
+        # rmsd/energy vs time and color by acceptance
+        pd.cut(acceptances, 3, labels=["good","medium","bad"])
+        
+        # Do rmsd/energy vs acceptance
+        plt.figure()
+        keys = sorted(avg_rmsd.keys())
+        labels = []
+        colors = sns.color_palette("hls", len(keys))
+        for i, key in enumerate(keys):
+            x = avg_rmsd[key][0] / avg_energy[key]
+            y = acceptances[key][0]
+            label = "%.2f %.2f"%key
+            plt.scatter(x, y, label = label, color = colors[i])
+            #plt.errorbar(x, y, xerr=avg_rmsd[key][1], yerr=acceptances[key][1],  fmt='o')
+            plt.annotate(
+                label, 
+                xy = (x, y), xytext = (5, 5),
+                textcoords = 'offset points', ha = 'right', va = 'bottom', size=6)
+        #plt.legend()
+        plt.show()
+        
+        # Do rmsd vs acceptance
+        plt.figure()
+        keys = sorted(avg_rmsd.keys())
+        labels = []
+        colors = sns.color_palette("hls", len(keys))
+        for i, key in enumerate(keys):
+            x = avg_rmsd[key][0]
+            y = acceptances[key][0]
+            label = "%.2f %.2f"%key
+            plt.scatter(x, y, label = label, color = colors[i])
+            #plt.errorbar(x, y, xerr=avg_rmsd[key][1], yerr=acceptances[key][1],  fmt='o')
+            plt.annotate(
+                label, 
+                xy = (x, y), xytext = (5, 5),
+                textcoords = 'offset points', ha = 'right', va = 'bottom', size=6)
+        #plt.legend()
+        plt.show()
+        
+        # Do energy vs acceptance
+        plt.figure()
+        keys = sorted(avg_rmsd.keys())
+        labels = []
+        colors = sns.color_palette("hls", len(keys))
+        for i, key in enumerate(keys):
+            x = avg_energy[key]
+            y = acceptances[key][0]
+            label = "%.2f %.2f"%key
+            plt.scatter(x, y, label = label, color = colors[i])
+            plt.annotate(
+                label, 
+                xy = (x, y), xytext = (5, 5),
+                textcoords = 'offset points', ha = 'right', va = 'bottom', size=6)
+        #plt.legend()
+        plt.show()
+          
         

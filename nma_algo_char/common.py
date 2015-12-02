@@ -14,6 +14,8 @@ import numbers
 import numpy
 from anmichelpers.tools.tools import norm
 from pyRMSD.RMSDCalculator import RMSDCalculator
+import random
+from math import exp
 
 class LineParser:
     def __init__(self, tag, position, conversion, split_token = None):
@@ -40,6 +42,28 @@ class LineCounter:
     def parse_line(self, line):
         if self.tag in line:
             self.counter = self.counter + 1
+            
+class MetropolisMCSimulator:
+    BOLTZMANN_KCAL_MOL = 0.001987207
+    
+    def __init__(self, energy_increments):
+        self.energy_increments = energy_increments
+
+    def perform_simulation(self, number_of_samples, number_of_tries, temperature):
+        beta = 1.0/(MetropolisMCSimulator.BOLTZMANN_KCAL_MOL * temperature)
+        experiment_acceptance = []
+        for _ in range(number_of_tries):
+            energy_bootstrap = random.sample(self.energy_increments, number_of_samples)
+            num_accepted = 0
+            for energy_diff in energy_bootstrap: 
+                if energy_diff <= 0:
+                    num_accepted += 1
+                else:
+                    prob = exp(-(beta*energy_diff))
+                    if prob > random.random():
+                        num_accepted += 1
+            experiment_acceptance.append(float(num_accepted)/number_of_samples)
+        return numpy.mean(experiment_acceptance), numpy.std(experiment_acceptance)
 
 def pair_parameter_values(parameter_keys, parameters):
     key1, key2 = parameter_keys[0], parameter_keys[1]
