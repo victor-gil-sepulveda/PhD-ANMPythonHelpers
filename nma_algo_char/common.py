@@ -183,14 +183,12 @@ def create_directory(directory_path, ensure_writability = False):
     if ensure_writability:
         if not os.access(os.path.dirname(directory_path), os.W_OK):
             return False
-    
     try:
         os.makedirs(directory_path)
         return True
     except OSError, e:
         if e.errno != errno.EEXIST:
             raise
-    
     return False
 
 def parameter_value_to_string(val):
