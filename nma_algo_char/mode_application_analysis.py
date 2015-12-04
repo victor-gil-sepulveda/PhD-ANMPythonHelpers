@@ -106,6 +106,7 @@ if __name__ == '__main__':
     acceptances = defaultdict(list)
     avg_energy = defaultdict(list)
     avg_rmsd = defaultdict(list)
+    avg_time = defaultdict(list)
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
         folder_name = "%s_%s_%s_%s_%s"%(experiment_details["prefix"],
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
@@ -136,6 +137,8 @@ if __name__ == '__main__':
                                                    20, 300)
         avg_energy[v1,v2] = numpy.mean(energy_increments)
         avg_rmsd[v1,v2] = (numpy.mean(rmsd_increments),numpy.std(rmsd_increments))
+        avg_time[v1,v2] = (numpy.mean(raw_data["time_per_step"][1:min_len]),
+                           numpy.std(raw_data["time_per_step"][1:min_len]))
         
         ## CAUTION: HARDCODED FILE ('out'). Must be extracted using the control file or experiment
         if experiment_details["prefix"] == "IC":
@@ -150,15 +153,26 @@ if __name__ == '__main__':
         save_relax_iterations(os.path.join(options.results_folder,os.path.basename(workspace),"relax.txt"),
                               relax_iterations)
            
+    # Find limits for energy (has outliers)
+    
+    ener_low = min(all_data["inc_U"])
+    ener_high = max(sorted(all_data["inc_U"])[:int(len(all_data["inc_U"])*0.98)]) #98% should eliminate outlayers
+    all_data["inc_U"] = numpy.array(all_data["inc_U"])
+    all_data["inc_U"][all_data["inc_U"] > ener_high] = ener_high
+    all_data["inc_U"] = list(all_data["inc_U"])
+    
     db = DataFrame.from_dict(all_data, orient="index")
     db.transpose().to_csv(os.path.join(options.results_folder,os.path.basename(workspace),"data.csv"))
     db.columns = db.columns.get_level_values(0)
     
     if options.do_plots:
         import seaborn as sns
+        
+        sns.set_style("whitegrid")
+        
         g = sns.FacetGrid(db.transpose(), col=p1, row=p2, hue="mode", 
                           sharex = True, sharey = True, margin_titles=True,
-                          legend_out = True)
+                          legend_out = True, ylim= (ener_low, ener_high))
        
         g.map(plt.scatter,  "rmsd", "inc_U")
         g.add_legend()
@@ -169,13 +183,76 @@ if __name__ == '__main__':
         db = db.T
         db["rmsd_inc_U"] = db.T.loc["rmsd"] / db.T.loc["inc_U"]
         sns.lmplot("time_per_step", "rmsd_inc_U", db, hue= p1, fit_reg = False, scatter_kws={"alpha":0.6})
+        plt.ylim((-4,4))
+        plt.title("RMSD/$\Delta U$ vs Time per Step (color by %s)"%p1)
+        plt.xlabel("RMSD/$\Delta U$ (${\AA mol / kcal}$)")
+        plt.ylabel("Time per Step(s)")  
+        
         plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd_vs_time_hue_%s.svg"%p1))
         sns.lmplot("time_per_step", "rmsd_inc_U", db, hue= p2, fit_reg = False, scatter_kws={"alpha":0.6})
+        plt.ylim((-4,4))
+        plt.title("RMSD/$\Delta U$ vs Time per Step (color by %s)"%p2)
+        plt.xlabel("RMSD/$\Delta U$ ($\AA mol / kcal$)")
+        plt.ylabel("Time per Step(s)")  
         plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd_vs_time_hue_%s.svg"%p2))
         plt.close()
         
-        # rmsd/energy vs time and color by acceptance
-        pd.cut(acceptances, 3, labels=["good","medium","bad"])
+        # Define categories for acceptance
+        # from 100% to 35%, yellow, high
+        # from 35% to 25%, green, good acceptance
+        # from 0 to 25%, red, bad acceptance
+        cat_acceptances = {}
+        for key in acceptances:
+            acceptance = acceptances[key][0]
+            if acceptance <= 1. and acceptance > 0.35:
+                cat_acceptances[key] = "high"
+            elif acceptance <= 0.35  and acceptance > 0.25:
+                cat_acceptances[key] = "good"
+            else:
+                cat_acceptances[key] = "low"
+        
+        # rmsd vs time and color by acceptance
+        plt.figure()
+        keys = sorted(avg_rmsd.keys())
+        labels = []
+        colors = {"high": "yellow","good":"green" ,"low":"red"}
+        
+        for  acc_cat in ["high","good","low"]:
+            x = []
+            y = []
+            for x_k in avg_rmsd:
+                if cat_acceptances[x_k] == acc_cat:
+                    x.append(avg_rmsd[x_k][0])
+                    y.append(avg_time[x_k][0])
+            plt.scatter(x, y, label = acc_cat, color = colors[acc_cat])
+            #plt.errorbar(x, y, xerr=avg_rmsd[key][1], yerr=acceptances[key][1],  fmt='o')
+        plt.title("Avg. RMSD vs Avg. Time per Step")
+        plt.xlabel("Avg. RMSD (${\AA}$)")
+        plt.ylabel("Avg. Time per Step (s)")    
+        plt.legend()
+        plt.show()
+        
+        
+        # inc_U vs time and color by acceptance
+        plt.figure()
+        keys = sorted(avg_rmsd.keys())
+        labels = []
+        colors = {"high": "yellow","good":"green" ,"low":"red"}
+        
+        for  acc_cat in ["high","good","low"]:
+            x = []
+            y = []
+            for x_k in avg_rmsd:
+                if cat_acceptances[x_k] == acc_cat:
+                    x.append(avg_energy[x_k])
+                    y.append(avg_time[x_k][0])
+            plt.scatter(x, y, label = acc_cat, color = colors[acc_cat])
+            #plt.errorbar(x, y, xerr=avg_rmsd[key][1], yerr=acceptances[key][1],  fmt='o')
+        plt.title("Avg. $\Delta U$ vs Time per Step")
+        plt.xlabel("Avg. $\Delta U$ (kcal/mol) $)")
+        plt.ylabel("Avg. Time per Step (s)")    
+        plt.legend()
+        plt.show()
         
         # Do rmsd/energy vs acceptance
         plt.figure()
