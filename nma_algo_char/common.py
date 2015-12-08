@@ -16,6 +16,7 @@ from anmichelpers.tools.tools import norm
 from pyRMSD.RMSDCalculator import RMSDCalculator
 import random
 from math import exp
+from _collections import defaultdict
 
 class LineParser:
     def __init__(self, tag, position, conversion, split_token = None):
@@ -220,3 +221,22 @@ def process_after_perturb_max_and_mean_disp(data):
     translations = numpy.array(superimposed_translations)
     norms = numpy.array([norm(t) for t in translations])
     return numpy.max(norms, axis = 1), numpy.mean(norms, axis = 1)
+
+def get_values_by_hue(val_x, val_y, hue_vals):
+    # assert all 3 have the same length
+    if len(val_x) == len(val_y) and len(val_y)== len(hue_vals):
+        vals_by_hue = defaultdict(lambda: {"x":[],"y":[]})
+        for i in range(len(val_x)):
+            vals_by_hue[hue_vals[i]]["x"].append(val_x[i])
+            vals_by_hue[hue_vals[i]]["y"].append(val_y[i])
+        return vals_by_hue
+    else:
+        print "Error::get_values_by_hue arays have not the same length (%d, %d, %d)"%(len(val_x), len(val_y), len(hue_vals))
+        exit(-1)
+
+def scatter_plot_by_hue(x, y, hue, colors):
+    import matplotlib.pyplot as plt
+    vals_by_hue = get_values_by_hue(x, y, hue)
+    for i,hue_key in enumerate(vals_by_hue):
+        plt.scatter(vals_by_hue[hue_key]["x"],vals_by_hue[hue_key]["y"], label = str(hue_key), color = colors[i], alpha = 0.6)
+    

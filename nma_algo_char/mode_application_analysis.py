@@ -9,7 +9,7 @@ from min_bias.min_bias_calc import calculate_rmsds
 from optparse import OptionParser
 from nma_algo_char.common import load_control_json, pair_parameter_values,\
     parameter_value_to_string, create_directory, LineCounter, LineParser,\
-    MetropolisMCSimulator
+    MetropolisMCSimulator, get_values_by_hue, scatter_plot_by_hue
 from collections import defaultdict
 from pandas.core.frame import DataFrame
 import matplotlib.pyplot as plt
@@ -107,6 +107,10 @@ if __name__ == '__main__':
     avg_energy = defaultdict(list)
     avg_rmsd = defaultdict(list)
     avg_time = defaultdict(list)
+    
+    ENERGY_LABEL = "$\Delta$ U"
+    RMSD_LABEL = "RMSD"
+    
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
         folder_name = "%s_%s_%s_%s_%s"%(experiment_details["prefix"],
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
@@ -124,10 +128,10 @@ if __name__ == '__main__':
         # skip first frame (usually an outlayer)
         #print "DBG", min_len-1, len(modes), len(process_modes(experiment_details["prefix"], modes, 10))
         energy_increments = process_energy_differences(raw_data)[1:]
-        all_data["inc_U"].extend(energy_increments)
+        all_data[ENERGY_LABEL].extend(energy_increments)
         rmsd_increments = process_after_perturb_rmsd(raw_data)[1:]
-        all_data["rmsd"].extend(rmsd_increments)
-        all_data["mode"].extend(process_modes(experiment_details["prefix"], modes, 10)[1:min_len])
+        all_data[RMSD_LABEL].extend(rmsd_increments)
+        all_data["Mode"].extend(process_modes(experiment_details["prefix"], modes, 10)[1:min_len])
         all_data["time_per_step"].extend(raw_data["time_per_step"][1:min_len])
         all_data[p1].extend([v1]*(min_len-1))
         all_data[p2].extend([v2]*(min_len-1))
@@ -155,11 +159,11 @@ if __name__ == '__main__':
            
     # Find limits for energy (has outliers)
     
-    ener_low = min(all_data["inc_U"])
-    ener_high = max(sorted(all_data["inc_U"])[:int(len(all_data["inc_U"])*0.98)]) #98% should eliminate outlayers
-    all_data["inc_U"] = numpy.array(all_data["inc_U"])
-    all_data["inc_U"][all_data["inc_U"] > ener_high] = ener_high
-    all_data["inc_U"] = list(all_data["inc_U"])
+    ener_low = min(all_data[ENERGY_LABEL])
+    ener_high = max(sorted(all_data[ENERGY_LABEL])[:int(len(all_data[ENERGY_LABEL])*0.98)]) #98% should eliminate outlayers
+    all_data[ENERGY_LABEL] = numpy.array(all_data[ENERGY_LABEL])
+    all_data[ENERGY_LABEL][all_data[ENERGY_LABEL] > ener_high] = ener_high
+    all_data[ENERGY_LABEL] = list(all_data[ENERGY_LABEL])
     
     db = DataFrame.from_dict(all_data, orient="index")
     db.transpose().to_csv(os.path.join(options.results_folder,os.path.basename(workspace),"data.csv"))
@@ -167,34 +171,36 @@ if __name__ == '__main__':
     
     if options.do_plots:
         import seaborn as sns
-        
         sns.set_style("whitegrid")
         
-        g = sns.FacetGrid(db.transpose(), col=p1, row=p2, hue="mode", 
+        # Facet grid to see rmsd vs energy vs dispfactor vs relaxation whatever
+        g = sns.FacetGrid(db.transpose(), col=p1, row=p2, hue="Mode", 
                           sharex = True, sharey = True, margin_titles=True,
                           legend_out = True, ylim= (ener_low, ener_high))
-       
-        g.map(plt.scatter,  "rmsd", "inc_U")
-        g.add_legend()
+        g.map(plt.scatter, RMSD_LABEL, ENERGY_LABEL)
+        g.add_legend(label_order = sorted(g._legend_data.keys()))
+        g.fig.suptitle("RMSD - $\Delta U$ - displacement - relaxation intensity (colored by mode)")
         g.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd.svg"))
         plt.close()
+
         
-        # Do rmsd/energy time
-        db = db.T
-        db["rmsd_inc_U"] = db.T.loc["rmsd"] / db.T.loc["inc_U"]
-        sns.lmplot("time_per_step", "rmsd_inc_U", db, hue= p1, fit_reg = False, scatter_kws={"alpha":0.6})
-        plt.ylim((-4,4))
-        plt.title("RMSD/$\Delta U$ vs Time per Step (color by %s)"%p1)
-        plt.xlabel("RMSD/$\Delta U$ (${\AA mol / kcal}$)")
-        plt.ylabel("Time per Step(s)")  
+        # Global rmsd vs time, color by dispfact and relax
+        colors = sns.color_palette("hls", len( set(all_data[p1])))
+        plt.subplot2grid((2,2), (0,0))
+        scatter_plot_by_hue(all_data[RMSD_LABEL], all_data["time_per_step"], all_data[p1], colors)
+
+        ax = plt.subplot2grid((2,2), (0,1))
+        scatter_plot_by_hue(all_data[RMSD_LABEL], all_data["time_per_step"], all_data[p2], colors)
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
+
+        # Global energy vs time, color by dispfact and relax
+        plt.subplot2grid((2,2), (1,0))
+        scatter_plot_by_hue(all_data[ENERGY_LABEL], all_data["time_per_step"], all_data[p1], colors)
         
-        plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd_vs_time_hue_%s.svg"%p1))
-        sns.lmplot("time_per_step", "rmsd_inc_U", db, hue= p2, fit_reg = False, scatter_kws={"alpha":0.6})
-        plt.ylim((-4,4))
-        plt.title("RMSD/$\Delta U$ vs Time per Step (color by %s)"%p2)
-        plt.xlabel("RMSD/$\Delta U$ ($\AA mol / kcal$)")
-        plt.ylabel("Time per Step(s)")  
-        plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd_vs_time_hue_%s.svg"%p2))
+        ax = plt.subplot2grid((2,2), (1,1))
+        scatter_plot_by_hue(all_data[ENERGY_LABEL], all_data["time_per_step"], all_data[p2], colors)
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
+        plt.show()
         plt.close()
         
         # Define categories for acceptance
