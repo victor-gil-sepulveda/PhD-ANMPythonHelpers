@@ -107,9 +107,6 @@ if __name__ == '__main__':
         cutt_res_folder = os.path.join(options.results_folder,"cutt_%.4f"%(cutoff))
         create_directory(cutt_res_folder)
         
-        #------------------------------
-        # RMSIP
-        #------------------------------
         all_rmsip = {}
         all_doc_cc = {}
         all_doc_ic = {}
@@ -135,20 +132,26 @@ if __name__ == '__main__':
                 all_rmsip[protein] = [(last_freq, rmsip(cc_eigenvectors[0:last_freq], ic_eigenvectors[0:last_freq])) for last_freq in range(5, MAX_EIGEN+1,5)]
                 all_doc_cc[protein] = deg_of_collectivity_cc
                 all_doc_ic[protein] = deg_of_collectivity_ic
-        # Plot rmsip for some mode ranges limit
-        for protein in size_ordered_proteins:
-            if protein in all_rmsip:
-                x = [] # <- rmsip per protein
-                y = [] # <- frequencies used in rmsip (must be the same for all of them)
-                for last_freq, rmsip_val in all_rmsip[protein]:
-                    x.append(last_freq)
-                    y.append(rmsip_val)
-                plt.plot(x, y, label = "%s (%d)"%(protein_ids[protein], size_per_protein[protein]))
-        lgd = plt.legend()
-        plt.tight_layout()
-        plt.savefig(os.path.join(cutt_res_folder,"rmsip_per_cutoff.svg"), bbox_extra_artists=(lgd,), bbox_inches='tight')
-        plt.title("RMSIP")
-        plt.close()            
+            
+        #------------------------------
+        # RMSIP
+        #------------------------------
+          
+        with sns.color_palette("hls", len(protein)):                
+            # Plot rmsip for some mode ranges limit
+            for protein in size_ordered_proteins:
+                if protein in all_rmsip:
+                    x = [] # <- rmsip per protein
+                    y = [] # <- frequencies used in rmsip (must be the same for all of them)
+                    for last_freq, rmsip_val in all_rmsip[protein]:
+                        x.append(last_freq)
+                        y.append(rmsip_val)
+                    plt.plot(x, y, label = "%s (%d)"%(protein_ids[protein], size_per_protein[protein]))
+            lgd = plt.legend()
+            plt.tight_layout()
+            plt.savefig(os.path.join(cutt_res_folder,"rmsip_per_cutoff.svg"), bbox_extra_artists=(lgd,), bbox_inches='tight')
+            plt.title("RMSIP")
+            plt.close()            
  
         #------------------------------
         # Collectivity
@@ -164,31 +167,32 @@ if __name__ == '__main__':
                         reformed_data["Mode"].append(mode)
                         reformed_data["DOC"].append(data[protein][mode])
             return reformed_data
-              
-        for prefix, data, pos in [("CC", all_doc_cc,(0,0)), ("IC", all_doc_ic,(1,0))]:
-            ax = plt.subplot2grid((2,1),pos)
-            ax.set_title(prefix)
-            reformed_data = reform_data(data, cut = 10)
-            pd_data = pd.DataFrame.from_dict(reformed_data)
-            ax = sns.barplot(x="Protein", y="DOC", hue="Mode", data=pd_data)
-            avgs = []
-            errors = []
-            for protein in size_ordered_proteins:
-                co_p_mode = []
-                for mode in range(5): 
-                    co_p_mode.append(data[protein][mode])
-                avgs.append(numpy.mean(co_p_mode[:5]))
-                errors.append(numpy.std(co_p_mode[:5]))
-            ax.errorbar(range(len(avgs)), avgs, yerr = errors, color="black")
-            for item in ax.get_xticklabels():
-                item.set_rotation(30)
-        plt.tight_layout()
-        lgd = plt.legend(loc='upper left')
         
-        plt.savefig(os.path.join(cutt_res_folder,"collectivity_of_modes.svg"),
-                    bbox_extra_artists=(lgd,), 
-                    bbox_inches='tight')
-        plt.close()
+        with sns.color_palette("BuGn_r",10):
+            for prefix, data, pos in [("CC", all_doc_cc,(0,0)), ("IC", all_doc_ic,(1,0))]:
+                ax = plt.subplot2grid((2,1),pos)
+                ax.set_title(prefix)
+                reformed_data = reform_data(data, cut = 10)
+                pd_data = pd.DataFrame.from_dict(reformed_data)
+                ax = sns.barplot(x="Protein", y="DOC", hue="Mode", data=pd_data)
+                avgs = []
+                errors = []
+                for protein in size_ordered_proteins:
+                    co_p_mode = []
+                    for mode in range(5): 
+                        co_p_mode.append(data[protein][mode])
+                    avgs.append(numpy.mean(co_p_mode[:5]))
+                    errors.append(numpy.std(co_p_mode[:5]))
+                ax.errorbar(range(len(avgs)), avgs, yerr = errors, color="black")
+                for item in ax.get_xticklabels():
+                    item.set_rotation(30)
+            plt.tight_layout()
+            lgd = plt.legend(loc='upper left')
+            
+            plt.savefig(os.path.join(cutt_res_folder,"collectivity_of_modes.svg"),
+                        bbox_extra_artists=(lgd,), 
+                        bbox_inches='tight')
+            plt.close()
         
 
         #------------------------------
@@ -203,31 +207,31 @@ if __name__ == '__main__':
                     data["Mode"].append(mode)
                     data["Cum. Overlap"].append(cum_overlap[protein][mode])
             return data        
-             
-        for prefix, data, pos in [("CC", all_cc_ic_overlaps,(0,0)), ("IC", all_ic_cc_overlaps,(1,0))]:
-            ax = plt.subplot2grid((2,1),pos)
-            ax.set_title(prefix)
-            dict_data  = reform_data_for_overlap(data)
-            df = pd.DataFrame.from_dict(dict_data)
-            sns.barplot("Protein","Cum. Overlap", "Mode", df)
-            avgs = []
-            errors = []
-            for protein in size_ordered_proteins:
-                co_p_mode = []
-                for mode in range(5): 
-                    co_p_mode.append(data[protein][mode])
-                avgs.append(numpy.mean(co_p_mode[:5]))
-                errors.append(numpy.std(co_p_mode[:5]))
-            plt.errorbar(range(len(set(dict_data["Protein"]))), avgs, yerr = errors, color="black")
-            plt.plot(range(len(set(dict_data["Protein"]))), avgs, marker="o", color="black")
-            plt.ylim((0.0,1.0))
-            for item in ax.get_xticklabels():
-                item.set_rotation(30)
-        plt.tight_layout()
-        lgd = plt.legend(loc='upper left')
-        plt.savefig(os.path.join(cutt_res_folder,"cumulative_overlap.svg"), 
-                            bbox_extra_artists=(lgd,), 
-                            bbox_inches='tight')
-        plt.close()
-        ## add plot with averages / errors underneath
+        
+        with sns.color_palette("BuGn_r",10):  
+            for prefix, data, pos in [("CC", all_cc_ic_overlaps,(0,0)), ("IC", all_ic_cc_overlaps,(1,0))]:
+                ax = plt.subplot2grid((2,1),pos)
+                ax.set_title(prefix)
+                dict_data  = reform_data_for_overlap(data)
+                df = pd.DataFrame.from_dict(dict_data)
+                sns.barplot("Protein","Cum. Overlap", "Mode", df)
+                avgs = []
+                errors = []
+                for protein in size_ordered_proteins:
+                    co_p_mode = []
+                    for mode in range(5): 
+                        co_p_mode.append(data[protein][mode])
+                    avgs.append(numpy.mean(co_p_mode[:5]))
+                    errors.append(numpy.std(co_p_mode[:5]))
+                plt.errorbar(range(len(set(dict_data["Protein"]))), avgs, yerr = errors, color="black")
+                plt.plot(range(len(set(dict_data["Protein"]))), avgs, marker="o", color="black")
+                plt.ylim((0.0,1.0))
+                for item in ax.get_xticklabels():
+                    item.set_rotation(30)
+            plt.tight_layout()
+            lgd = plt.legend(loc='upper left')
+            plt.savefig(os.path.join(cutt_res_folder,"cumulative_overlap.svg"), 
+                                bbox_extra_artists=(lgd,), 
+                                bbox_inches='tight')
+            plt.close()
                      
