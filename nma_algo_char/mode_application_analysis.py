@@ -103,8 +103,9 @@ if __name__ == '__main__':
     create_directory(os.path.join(options.results_folder, os.path.basename(workspace)))
     all_data = defaultdict(list)
     relax_iterations = []
-    acceptances = defaultdict(list)
+    acceptances = defaultdict(lambda: defaultdict(list))
     avg_energy = defaultdict(list)
+    std_energy = defaultdict(list)
     avg_rmsd = defaultdict(list)
     avg_time = defaultdict(list)
     
@@ -137,9 +138,9 @@ if __name__ == '__main__':
         all_data[p2].extend([v2]*(min_len-1))
         
         mc = MetropolisMCSimulator(energy_increments)
-        acceptances[v1,v2] = mc.perform_simulation(min(100,len(energy_increments)), 
-                                                   20, 300)
+        acceptances[v1,v2] = mc.perform_simulation(min(100,len(energy_increments)), 20, 300)
         avg_energy[v1,v2] = numpy.mean(energy_increments)
+        std_energy[v1,v2] = numpy.std(energy_increments)
         avg_rmsd[v1,v2] = (numpy.mean(rmsd_increments),numpy.std(rmsd_increments))
         avg_time[v1,v2] = (numpy.mean(raw_data["time_per_step"][1:min_len]),
                            numpy.std(raw_data["time_per_step"][1:min_len]))
@@ -151,14 +152,12 @@ if __name__ == '__main__':
                 relax_iterations.append((v1,v2, numpy.mean(relax_iters[1:]), 
                                      numpy.std(relax_iters[1:]), 
                                      float(times_conv) / len(relax_iters[1:])))
-            
     
     if experiment_details["prefix"] == "IC" and relax_iterations != []:
         save_relax_iterations(os.path.join(options.results_folder,os.path.basename(workspace),"relax.txt"),
                               relax_iterations)
            
     # Find limits for energy (has outliers)
-    
     ener_low = min(all_data[ENERGY_LABEL])
     ener_high = max(sorted(all_data[ENERGY_LABEL])[:int(len(all_data[ENERGY_LABEL])*0.98)]) #98% should eliminate outlayers
     all_data[ENERGY_LABEL] = numpy.array(all_data[ENERGY_LABEL])
@@ -183,24 +182,27 @@ if __name__ == '__main__':
         g.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_u_rmsd.svg"))
         plt.close()
 
-        
         # Global rmsd vs time, color by dispfact and relax
         colors = sns.color_palette("hls", len( set(all_data[p1])))
-        plt.subplot2grid((2,2), (0,0))
+        ax = plt.subplot2grid((2,2), (0,0))
         scatter_plot_by_hue(all_data[RMSD_LABEL], all_data["time_per_step"], all_data[p1], colors)
-
-        ax = plt.subplot2grid((2,2), (0,1))
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
+        ax.set_ylabel("Tps (s) (hue=%s)"%p1)
+        
+        ax = plt.subplot2grid((2,2), (1,0))
         scatter_plot_by_hue(all_data[RMSD_LABEL], all_data["time_per_step"], all_data[p2], colors)
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
+        ax.set_ylabel("Tps (s) (hue=%s)"%p2)
+        ax.set_xlabel("RMSD")
 
         # Global energy vs time, color by dispfact and relax
-        plt.subplot2grid((2,2), (1,0))
+        ax = plt.subplot2grid((2,2), (0,1))
         scatter_plot_by_hue(all_data[ENERGY_LABEL], all_data["time_per_step"], all_data[p1], colors)
         
         ax = plt.subplot2grid((2,2), (1,1))
         scatter_plot_by_hue(all_data[ENERGY_LABEL], all_data["time_per_step"], all_data[p2], colors)
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
-        plt.show()
+        ax.set_xlabel("Energy" )
+        plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_vs_timespep.svg"))
         plt.close()
         
         # Define categories for acceptance
@@ -236,15 +238,14 @@ if __name__ == '__main__':
         plt.xlabel("Avg. RMSD (${\AA}$)")
         plt.ylabel("Avg. Time per Step (s)")    
         plt.legend()
-        plt.show()
-        
+        plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_rmsd_vs_tps_hue_acc.svg"))
+        plt.close()
         
         # inc_U vs time and color by acceptance
         plt.figure()
         keys = sorted(avg_rmsd.keys())
         labels = []
         colors = {"high": "yellow","good":"green" ,"low":"red"}
-        
         for  acc_cat in ["high","good","low"]:
             x = []
             y = []
@@ -254,11 +255,12 @@ if __name__ == '__main__':
                     y.append(avg_time[x_k][0])
             plt.scatter(x, y, label = acc_cat, color = colors[acc_cat])
             #plt.errorbar(x, y, xerr=avg_rmsd[key][1], yerr=acceptances[key][1],  fmt='o')
-        plt.title("Avg. $\Delta U$ vs Time per Step")
-        plt.xlabel("Avg. $\Delta U$ (kcal/mol) $)")
+        plt.title("Avg. $\Delta U$ vs Time per Step (hue=acceptance)")
+        plt.xlabel("Avg. $\Delta U$ (kcal/mol) ")
         plt.ylabel("Avg. Time per Step (s)")    
         plt.legend()
-        plt.show()
+        plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_energy_vs_tps_hue_acc.svg"))
+        plt.close()
         
         # Do rmsd/energy vs acceptance
         plt.figure()
@@ -275,8 +277,10 @@ if __name__ == '__main__':
                 label, 
                 xy = (x, y), xytext = (5, 5),
                 textcoords = 'offset points', ha = 'right', va = 'bottom', size=6)
-        #plt.legend()
-        plt.show()
+        plt.xlabel("RMSD / energy")
+        plt.ylabel("Acceptance")    
+        plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_rmsd_energy_vs_acc.svg"))
+        plt.close()
         
         # Do rmsd vs acceptance
         plt.figure()
@@ -288,13 +292,15 @@ if __name__ == '__main__':
             y = acceptances[key][0]
             label = "%.2f %.2f"%key
             plt.scatter(x, y, label = label, color = colors[i])
-            #plt.errorbar(x, y, xerr=avg_rmsd[key][1], yerr=acceptances[key][1],  fmt='o')
+            plt.errorbar(x, y, xerr = avg_rmsd[key][1], yerr=acceptances[key][1],  fmt='o')
             plt.annotate(
                 label, 
                 xy = (x, y), xytext = (5, 5),
                 textcoords = 'offset points', ha = 'right', va = 'bottom', size=6)
-        #plt.legend()
-        plt.show()
+        plt.xlabel("RMSD")
+        plt.ylabel("Acceptance")   
+        plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_rmsd_vs_acc.svg"))
+        plt.close()
         
         # Do energy vs acceptance
         plt.figure()
@@ -305,12 +311,14 @@ if __name__ == '__main__':
             x = avg_energy[key]
             y = acceptances[key][0]
             label = "%.2f %.2f"%key
+            plt.errorbar(x, y, xerr = std_energy[key], yerr=acceptances[key][1],  color = colors[i])
             plt.scatter(x, y, label = label, color = colors[i])
             plt.annotate(
                 label, 
                 xy = (x, y), xytext = (5, 5),
                 textcoords = 'offset points', ha = 'right', va = 'bottom', size=6)
-        #plt.legend()
-        plt.show()
-          
-        
+        plt.xlabel("Energy")
+        plt.ylabel("Acceptance")   
+        plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_energy_vs_acc.svg"))
+        plt.close()
+            
