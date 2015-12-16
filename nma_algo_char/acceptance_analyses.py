@@ -10,10 +10,11 @@ from nma_algo_char.common import load_control_json, create_directory,\
 import os
 from _collections import defaultdict
 from nma_algo_char.mode_application_analysis import load_cc_data, load_ic_data,\
-    process_energy_differences, process_after_perturb_rmsd
+    process_energy_differences, process_after_perturb_rmsd, load_data
 import numpy
 import matplotlib.pyplot as plt
-
+import seaborn as sns
+from matplotlib.colors import ListedColormap
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -56,7 +57,13 @@ if __name__ == '__main__':
         
         ## CAUTION: HARDCODED FOLDER ('info'). Must be extracted using the control file
         if experiment_details["prefix"] == "CC":
-            raw_data, min_len = load_cc_data(os.path.join(workspace, folder_name,"info"))
+            raw_data, min_len = load_data(os.path.join(workspace, folder_name,"info"), 
+                                          "perturb_energy_before.log",
+#                                           "perturb_energy_after.log", 
+                                        "final_energy.log",   # Energy of the whole step
+                                          "initial_cc.log", 
+                                          "after_anm_cc.log", 
+                                          "step_time.log")
         
         if experiment_details["prefix"] == "IC":
             raw_data, min_len = load_ic_data(os.path.join(workspace, folder_name,"info"))
@@ -68,7 +75,8 @@ if __name__ == '__main__':
         
         mc = MetropolisMCSimulator(energy_increments)
         for T in acceptance_temperatures :
-            acceptances[T][v1,v2] = mc.perform_simulation(min(100,len(energy_increments)), 20, T)
+            acceptances[T][v1,v2] = mc.perform_simulation(min(50,len(energy_increments)), 40, T)
+            print acceptances[T][v1,v2]
         avg_energy[v1,v2] = numpy.mean(energy_increments)
         std_energy[v1,v2] = numpy.std(energy_increments)
         avg_rmsd[v1,v2] = numpy.mean(rmsd_increments)
@@ -79,37 +87,45 @@ if __name__ == '__main__':
     p1_keys = sorted(list(set(p1_keys)))
     p2_keys = sorted(list(set(p2_keys)))   
     acc_colors = {"high": "yellow","good":"green" ,"low":"red"}
-    cat_to_float = {"high": 1.0, "good":0.3 ,"low": 0}
+    cat_to_float = {"high": 1.0, "good":0.5 ,"low": 0.0}
+    
+    good_parameters = defaultdict(list)
+    cat_acceptances = defaultdict(dict)
     for T in acceptance_temperatures:
-        cat_acceptances = {}
         for key in acceptances[T]:
             acceptance_avg, acceptance_std = acceptances[T][key]
             if acceptance_avg <= 1. and acceptance_avg > 0.35:
-                cat_acceptances[key] = "high"
+                cat_acceptances[T][key] = "high"
             elif acceptance_avg <= 0.35  and acceptance_avg > 0.25:
-                cat_acceptances[key] = "good"
+                cat_acceptances[T][key] = "good"
             else:
-                cat_acceptances[key] = "low"
-        hue = []
-        x = []
-        y = []
+                cat_acceptances[T][key] = "low"
         for v1 in p1_keys:
             for v2 in p2_keys:
-                x.append(v1)
-                y.append(v2)
-                hue.append(cat_acceptances[v1,v2])
-        vals_by_hue = get_values_by_hue(x,y,hue)
-        for hue_val in vals_by_hue:
-            plt.scatter(vals_by_hue[hue_val]["x"], 
-                        vals_by_hue[hue_val]["y"], 
-                        label = hue_val, 
-                        color = acc_colors[hue_val])
-        
-        plt.show()
-        
-        matrix = numpy.zeros((len(p1_keys), len(p2_keys)))
-        for i,v1 in enumerate(p1_keys):
-            for j,v2 in enumerate(p2_keys):
-                matrix[i][j] = cat_to_float[cat_acceptances[v1,v2]]
-        plt.matshow(matrix)
-        plt.show()
+                if cat_acceptances[T][v1,v2] == "good":
+                    good_parameters[T].append((avg_rmsd[v1,v2]-std_rmsd[v1,v2], avg_rmsd[v1,v2]+std_rmsd[v1,v2],avg_rmsd[v1,v2], p1, v1, p2, v2))
+    
+    row_len = 4
+    col_len = 4
+    f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
+    f.subplots_adjust(hspace=0.4, wspace=0.3 )
+    f.set_size_inches(10, 12, forward=True)
+    matrix = numpy.zeros((len(p1_keys), len(p2_keys)))
+    for i,T in enumerate(acceptance_temperatures):
+        for j,v1 in enumerate(p1_keys):
+            for k,v2 in enumerate(p2_keys):
+                matrix[j][k] = cat_to_float[cat_acceptances[T][v1,v2]]
+        print i, i/row_len, i%row_len
+        ax = axes[i/row_len, i%row_len] 
+        sns.heatmap(matrix, cmap=ListedColormap(['red', 'green', 'yellow']), ax = ax, square = False, cbar = False, center = 0.5)
+        ax.set_xticklabels([str(i) for i in p2_keys])
+        ax.set_yticklabels([str(i) for i in sorted(p1_keys, reverse=True)])
+        ax.set_title("T = %d"%T)
+    plt.show()
+    
+    # for each displacement pick smaller temperature
+    for T in sorted(good_parameters.keys()):
+        good_parameters[T] = sorted(good_parameters[T],reverse=True)
+        print T, 
+        for x in good_parameters[T][0]: print x,
+        print
