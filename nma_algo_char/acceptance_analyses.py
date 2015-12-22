@@ -73,10 +73,17 @@ if __name__ == '__main__':
         energy_increments = process_energy_differences(raw_data)[1:]
         rmsd_increments = process_after_perturb_rmsd(raw_data)[1:]
         
+        menores_que_cero  = 0
+        for e in energy_increments: 
+            if e < 0.: 
+                menores_que_cero+=1 
+                
+        print "MQC", v1,v2, menores_que_cero
+        
         mc = MetropolisMCSimulator(energy_increments)
         for T in acceptance_temperatures :
             acceptances[T][v1,v2] = mc.perform_simulation(min(50,len(energy_increments)), 40, T)
-            print acceptances[T][v1,v2]
+#             print T, v1, v2,  acceptances[T][v1,v2], mc.expected_probability(T)
         avg_energy[v1,v2] = numpy.mean(energy_increments)
         std_energy[v1,v2] = numpy.std(energy_increments)
         avg_rmsd[v1,v2] = numpy.mean(rmsd_increments)

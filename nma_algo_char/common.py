@@ -50,6 +50,13 @@ class MetropolisMCSimulator:
     def __init__(self, energy_increments):
         self.energy_increments = energy_increments
 
+    def expected_probability(self, temperature):
+        beta = 1.0/(MetropolisMCSimulator.BOLTZMANN_KCAL_MOL * temperature)
+        experiment_acceptance = []
+        for inc_u in self.energy_increments:
+            experiment_acceptance.append(min(1.0,max(0.0,exp(-(beta*inc_u)))))
+        return numpy.mean(experiment_acceptance), numpy.std(experiment_acceptance)
+    
     def perform_simulation(self, number_of_samples, number_of_tries, temperature):
         beta = 1.0/(MetropolisMCSimulator.BOLTZMANN_KCAL_MOL * temperature)
         experiment_acceptance = []
