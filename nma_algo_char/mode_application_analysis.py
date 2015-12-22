@@ -14,10 +14,13 @@ from collections import defaultdict
 from pandas.core.frame import DataFrame
 import matplotlib.pyplot as plt
 import pandas as pd
+from anmichelpers.parsers.pronmd import ProdyNMDParser
+import math
 
 def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step_time):
     data = {}
     # energies
+    print "e_after folder" , os.path.join(data_folder,e_after)
     data["e_after"] = numpy.loadtxt(os.path.join(data_folder,e_after)).T[1]
     data["e_before"] = numpy.loadtxt(os.path.join(data_folder,e_before)).T[1]
     
@@ -72,7 +75,7 @@ def process_modes(NMA_type, modes, num_iterations = 10):
         return modes
     if NMA_type == "IC":
         #print "DBG", "IC"
-        # in CC the main picker will otput the message once, then the NMA IC pickers. We need to eliminate the first ones.
+        # in CC the main picker will output the message once, then the NMA IC pickers. We need to eliminate the first ones.
         return numpy.array(modes)[(numpy.arange(len(modes))%(num_iterations+1) != 0)]
 
 def save_relax_iterations(path, relax_iterations):
@@ -111,7 +114,7 @@ if __name__ == '__main__':
     
     ENERGY_LABEL = "$\Delta$ U"
     RMSD_LABEL = "RMSD"
-    
+    nmd_file_name = {"CC":"normalized_modes.1.nmd", "IC":"normalized_modes_cc.1.nmd"}
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
         folder_name = "%s_%s_%s_%s_%s"%(experiment_details["prefix"],
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
@@ -126,13 +129,22 @@ if __name__ == '__main__':
         if experiment_details["prefix"] == "IC":
             raw_data, min_len = load_ic_data(os.path.join(workspace, folder_name,"info"))
         
+        _, eval, header =  ProdyNMDParser.read(os.path.join(workspace, 
+                                                    folder_name,
+                                                    "info",
+                                                    nmd_file_name[experiment_details["prefix"]]))
+        frequencies = numpy.sqrt(eval)/ (2*math.pi)
+        mode_to_freq = dict(zip(range(len(frequencies)), frequencies))
+        
         # skip first frame (usually an outlayer)
         #print "DBG", min_len-1, len(modes), len(process_modes(experiment_details["prefix"], modes, 10))
         energy_increments = process_energy_differences(raw_data)[1:]
         all_data[ENERGY_LABEL].extend(energy_increments)
         rmsd_increments = process_after_perturb_rmsd(raw_data)[1:]
         all_data[RMSD_LABEL].extend(rmsd_increments)
-        all_data["Mode"].extend(process_modes(experiment_details["prefix"], modes, 10)[1:min_len])
+        modes = process_modes(experiment_details["prefix"], modes, 10)[1:min_len]
+        all_data["Mode"].extend(modes)
+        all_data["Mode_Freq"].extend([mode_to_freq[m] for m in modes])
         all_data["time_per_step"].extend(raw_data["time_per_step"][1:min_len])
         all_data[p1].extend([v1]*(min_len-1))
         all_data[p2].extend([v2]*(min_len-1))
@@ -321,4 +333,6 @@ if __name__ == '__main__':
         plt.ylabel("Acceptance")   
         plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace)+"_energy_vs_acc.svg"))
         plt.close()
+        
+        # Displacement (normalized) vs Frequency
             

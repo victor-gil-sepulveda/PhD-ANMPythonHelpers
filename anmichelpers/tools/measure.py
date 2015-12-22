@@ -37,6 +37,9 @@ def mean_square_fluctuations(eigenvalues, eigenvectors, number_of_nodes, prefact
 
 def ca_rmsf(pdb_ca_struct):
     ca_coords = pdb_ca_struct.getCoordsets()
+    return coords_rmsf(ca_coords)
+
+def coords_rmsf(ca_coords):    
     calculator = RMSDCalculator(calculatorType = "QTRFIT_OMP_CALCULATOR",
                                 fittingCoordsets = ca_coords)
     
