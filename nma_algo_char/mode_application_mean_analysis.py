@@ -8,28 +8,37 @@ import pandas as pd
 from nma_algo_char.common import parameter_value_to_string
 import matplotlib.pyplot as plt
 import seaborn as sns
+sns.set_style("whitegrid")
 
 if __name__ == '__main__':
+    ENERGY_LABEL = "$\Delta$ U"
+    RMSD_LABEL = "RMSD"
     
 #     folder_file = "" 
 #     folders = [ line.strip() for line in open(folder_file)]
-#     folders = ["Results/cc_open_steer_dispf",
-#                "Results/cc_closed_rmsg_dispf",
-#                "Results/cc_closed_steer_dispf",
-#                "Results/cc_open_rmsg_dispf"]
-# 
-#     average_by = "rmsd:inc_U".split(":")
-#     plot_using_all = "displacementFactor:steeringForce:rmsg".split(":")
+    folders = ["Results/cc_open_steer_dispf",
+               "Results/cc_closed_steer_dispf",
+               "Results/cc_open_rmsg_dispf",
+               "Results/cc_closed_rmsg_dispf"]
+    plt_labels = {
+               "Results/cc_open_steer_dispf":"Open/steeringForce",
+               "Results/cc_closed_steer_dispf":"Closed/steeringForce",
+               "Results/cc_open_rmsg_dispf":"Open/MinimumRMS",
+               "Results/cc_closed_rmsg_dispf":"Closed/MinimumRMS"
+              }
+ 
+    plot_using_all = "displacementFactor:steeringForce:rmsg".split(":")
 #     
+#     folders = [
+# #                "Results/cc_closed_rmsg_dispf",
+# #                "Results/cc_open_rmsg_dispf"
+#                "Results/cc_closed_steer_dispf",
+#                "Results/cc_open_steer_dispf"
+#                ]
+# 
+#     plot_using_all = "displacementFactor:rmsg".split(":")
     
-    folders = [
-               "Results/ic_closed_iters_dispf",
-               "Results/ic_open_iters_dispf"
-               ]
-
-    average_by = "rmsd:inc_U".split(":")
-    plot_using_all = "displacementFactor:iters".split(":")
-    
+    average_by = [RMSD_LABEL, ENERGY_LABEL]
     colors = sns.color_palette("pastel", 8)
     for i,folder in enumerate(folders):
         data_path = os.path.join(folder,"data.csv")
@@ -64,14 +73,16 @@ if __name__ == '__main__':
                 
                 labels.append("%s %s"%(parameter_value_to_string(p1_key),
                                        parameter_value_to_string(p2_key)))
-        plt.scatter(xs, ys, marker = 'o', c = colors[i], label = os.path.basename( folder))
-        plt.errorbar(xs, ys, xerr=xs_std, yerr=ys_std, linestyle="None", c = colors[i])
+        plt.scatter(xs, ys, marker = 'o', c = colors[i], label = plt_labels[folder])
+#         plt.errorbar(xs, ys, xerr=xs_std, yerr=ys_std, linestyle="None", c = colors[i])
         for label, x, y in zip(labels, xs, ys):
             plt.annotate(
                 label, 
                 xy = (x, y), xytext = (5, 5),
                 textcoords = 'offset points', ha = 'right', va = 'bottom', size=6)
-    lgd = plt.legend(loc='upper center', ncol=4)
+    plt.xlabel(RMSD_LABEL)
+    plt.ylabel(ENERGY_LABEL)
+    lgd = plt.legend()#(loc='upper center', ncol=4)
     plt.show()
 
     # savefig bbox_extra_artists=(lgd,)

@@ -28,8 +28,6 @@ if __name__ == '__main__':
     parser.add_option("-d", dest="data")
     parser.add_option("--rmsf-reference", dest="rmsf_ref")
     
-    
-    
     (options, args) = parser.parse_args()
     
     if not options.experiment:  
@@ -60,7 +58,7 @@ if __name__ == '__main__':
     p1_keys = []
     p2_keys = []
     acceptance_temperatures = [300, 866, 1432, 2000, 2568, 3000]
-#     acceptance_temperatures = [3000]
+    acceptance_temperatures = [300]
     
     if options.data is None:
         for T in acceptance_temperatures:
@@ -155,11 +153,22 @@ if __name__ == '__main__':
                                                p1, v1, 
                                                p2, v2))
     
+    def prepare_subplots(row_len, col_len):
+        if row_len > 1 or col_len > 1:
+            f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
+            f.subplots_adjust(hspace=0.4, wspace=0.3 )
+            f.set_size_inches(10, 6, forward=True)
+        else:
+            f = plt.gcf()
+            axes = {(0,0): plt.gca()}
+        return f, axes
+    
     row_len = 3
     col_len = 2
-    f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
-    f.subplots_adjust(hspace=0.4, wspace=0.3 )
-    f.set_size_inches(10, 6, forward=True)
+    row_len = 1
+    col_len = 1
+    f, axes = prepare_subplots(row_len, col_len)
+    
     matrix = numpy.zeros((len(p1_keys), len(p2_keys)))
     for i,T in enumerate(acceptance_temperatures):
         for j,v1 in enumerate(p1_keys):
@@ -172,21 +181,19 @@ if __name__ == '__main__':
         ax.set_xticklabels([str(i) for i in p2_keys])
         ax.set_yticklabels([str(i) for i in sorted(p1_keys, reverse=True)])
         ax.set_title("T = %d"%T)
-#     plt.show()
     plt.savefig(os.path.join(results_folder,"acceptance_avg.svg"))
     plt.close()
     
     # Do rmsf comparisons
     if options.rmsf_ref:
-        f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
-        f.subplots_adjust(hspace=0.4, wspace=0.3 )
-        f.set_size_inches(10, 6, forward=True)
+        f, axes = prepare_subplots(row_len, col_len)
         rmsf_matrix = numpy.zeros((len(p1_keys), len(p2_keys)))
         rmsf_ref = numpy.loadtxt(options.rmsf_ref)[:-1]
         for i,T in enumerate(acceptance_temperatures):
             for j,v1 in enumerate(p1_keys):
                 for k,v2 in enumerate(p2_keys):
                     rmsf_matrix[j][k] = rms(rmsf_ref,rmsf[T][v1,v2])
+            print i, i/row_len, i%row_len
             ax = axes[i/row_len, i%row_len] 
             sns.heatmap(rmsf_matrix, #cmap=ListedColormap(['red', 'green', 'yellow']), 
                     ax = ax, square = False, cbar = True, #center = 0.5,
@@ -195,9 +202,7 @@ if __name__ == '__main__':
         plt.close()
         
         sns.set_style("whitegrid", {"lines.linewidth": ".7"})
-        f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
-        f.subplots_adjust(hspace=0.2, wspace=0.3 )
-        f.set_size_inches(10, 6, forward=True)
+        f, axes = prepare_subplots(row_len, col_len)
         for i,T in enumerate(acceptance_temperatures):
             ax = axes[i/row_len, i%row_len]
             ax.plot(rmsf_ref, lw=0.8)
