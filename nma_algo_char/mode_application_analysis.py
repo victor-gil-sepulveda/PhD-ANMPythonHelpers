@@ -19,6 +19,9 @@ import math
 import scipy.stats
 import cPickle as pickle
 
+def load_energy(data_folder, energy_file):
+    return numpy.loadtxt(os.path.join(data_folder,energy_file)).T[1]
+
 def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step_time):
     data = {}
     # energies

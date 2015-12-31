@@ -57,8 +57,9 @@ if __name__ == '__main__':
     rmsf = defaultdict(dict)
     p1_keys = []
     p2_keys = []
-    acceptance_temperatures = [300, 866, 1432, 2000, 2568, 3000]
-    acceptance_temperatures = [300]
+    
+    acceptance_temperatures = [300, 583, 866, 1150, 1432, 2000, 2568, 3000, 300]
+#     acceptance_temperatures = [300]
     
     if options.data is None:
         for T in acceptance_temperatures:
@@ -157,16 +158,16 @@ if __name__ == '__main__':
         if row_len > 1 or col_len > 1:
             f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
             f.subplots_adjust(hspace=0.4, wspace=0.3 )
-            f.set_size_inches(10, 6, forward=True)
+            f.set_size_inches(12, 12, forward=True)
         else:
             f = plt.gcf()
             axes = {(0,0): plt.gca()}
         return f, axes
     
     row_len = 3
-    col_len = 2
-    row_len = 1
-    col_len = 1
+    col_len = 3
+#     row_len = 1
+#     col_len = 1
     f, axes = prepare_subplots(row_len, col_len)
     
     matrix = numpy.zeros((len(p1_keys), len(p2_keys)))
@@ -175,7 +176,7 @@ if __name__ == '__main__':
             for k,v2 in enumerate(p2_keys):
                 matrix[j][k] = acceptances[T][v1,v2][0]#cat_to_float[cat_acceptances[T][v1,v2]]
         ax = axes[i/row_len, i%row_len] 
-        sns.heatmap(matrix, #cmap=ListedColormap(['red', 'green', 'yellow']), 
+        sns.heatmap(matrix, vmin = 0.0, vmax=1.0,#cmap=ListedColormap(['red', 'green', 'yellow']), 
                     ax = ax, square = False, cbar = True, center = 0.5,
                     annot = True)
         ax.set_xticklabels([str(i) for i in p2_keys])
@@ -193,11 +194,13 @@ if __name__ == '__main__':
             for j,v1 in enumerate(p1_keys):
                 for k,v2 in enumerate(p2_keys):
                     rmsf_matrix[j][k] = rms(rmsf_ref,rmsf[T][v1,v2])
-            print i, i/row_len, i%row_len
             ax = axes[i/row_len, i%row_len] 
-            sns.heatmap(rmsf_matrix, #cmap=ListedColormap(['red', 'green', 'yellow']), 
+            sns.heatmap(rmsf_matrix, vmin = 2.0, vmax=2.6,#cmap=ListedColormap(['red', 'green', 'yellow']), 
                     ax = ax, square = False, cbar = True, #center = 0.5,
                     annot = True)
+            ax.set_title("T = %d"%T)
+            ax.set_xticklabels([str(i) for i in p2_keys])
+            ax.set_yticklabels([str(i) for i in sorted(p1_keys, reverse=True)])
         plt.savefig(os.path.join(results_folder,"rmsf_avg.svg"))
         plt.close()
         
