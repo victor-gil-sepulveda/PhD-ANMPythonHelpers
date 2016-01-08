@@ -22,7 +22,7 @@ import cPickle as pickle
 def load_energy(data_folder, energy_file):
     return numpy.loadtxt(os.path.join(data_folder,energy_file)).T[1]
 
-def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step_time):
+def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step_time, max_samples = numpy.inf):
     data = {}
     # energies
     print "e_after folder" , os.path.join(data_folder,e_after)
@@ -36,16 +36,22 @@ def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step
     # time per step
     data["time_per_step"] = numpy.loadtxt(os.path.join(data_folder, step_time)).T[1]
     
-    # trimm data as there can be an excess of 1
-    min_len = min(len(data["e_after"]), len(data["e_before"]), len(data["coords_after"]), len(data["coords_before"]))
+    # trim data as there can be an excess of 1
+    min_len = min(max_samples,
+                  len(data["e_after"]), 
+                  len(data["e_before"]), 
+                  len(data["coords_after"]), 
+                  len(data["coords_before"])
+                  )
     for key in data:
         data[key] = data[key][:min_len]
     
     return data, min_len
 
-def load_ic_data(data_folder):
+def load_ic_data(data_folder, max_samples = numpy.inf):
     return load_data(data_folder, "ener_mc_move_before.log", "ener_mc_move_after.log",  
-                     "ca_mc_move_before.log", "ca_mc_move_after.log", "step_time.log")
+                     "ca_mc_move_before.log", "ca_mc_move_after.log", "step_time.log",
+                     max_samples)
     
 def load_cc_data(data_folder):
     return load_data(data_folder, "perturb_energy_before.log", "perturb_energy_after.log",  

@@ -59,7 +59,11 @@ if __name__ == '__main__':
     p2_keys = []
     
     acceptance_temperatures = [300, 583, 866, 1150, 1432, 2000, 2568, 3000, 300]
-#     acceptance_temperatures = [300]
+    acceptance_temperatures = [300, 350, 400, 450, 500, 300]
+    row_len = 3
+    col_len = 2
+#     max_samples = 150
+    max_samples = numpy.inf
     
     if options.data is None:
         for T in acceptance_temperatures:
@@ -86,7 +90,7 @@ if __name__ == '__main__':
                                                   "step_time.log")
                 
                 if experiment_details["prefix"] == "IC":
-                    raw_data, min_len = load_ic_data(os.path.join(workspace, folder_name,"info"))
+                    raw_data, min_len = load_ic_data(data_folder, max_samples)
                 
                 # skip first frame (usually an outlayer)
                 #print "DBG", min_len-1, len(modes), len(process_modes(experiment_details["prefix"], modes, 10))
@@ -164,10 +168,7 @@ if __name__ == '__main__':
             axes = {(0,0): plt.gca()}
         return f, axes
     
-    row_len = 3
-    col_len = 3
-#     row_len = 1
-#     col_len = 1
+
     f, axes = prepare_subplots(row_len, col_len)
     
     matrix = numpy.zeros((len(p1_keys), len(p2_keys)))
