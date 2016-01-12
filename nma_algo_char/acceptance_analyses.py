@@ -17,6 +17,7 @@ import seaborn as sns
 import cPickle as pickle
 from anmichelpers.tools.measure import coords_rmsf
 from trajectory_comparison.compare_two_rmsfs import rms
+from operator import itemgetter
 
 if __name__ == '__main__':
     sns.set_style("whitegrid")
@@ -58,13 +59,16 @@ if __name__ == '__main__':
     p1_keys = []
     p2_keys = []
     
-    acceptance_temperatures = [300, 583, 866, 1150, 1432, 2000, 2568, 3000, 300]
-    acceptance_temperatures = [300, 350, 400, 450, 500, 300]
-    row_len = 3
-    col_len = 2
-#     max_samples = 150
-    max_samples = numpy.inf
+    max_samples = 1500
     
+    acceptance_temperatures = [300, 583, 866, 1150, 1432, 2000, 2568, 300, 300]
+    row_len = 3
+    col_len = 3
+#     acceptance_temperatures = [300, 350, 400, 450, 500, 300]
+#     row_len = 3
+#     col_len = 2
+#     max_samples = numpy.inf
+     
     if options.data is None:
         for T in acceptance_temperatures:
             for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
@@ -82,10 +86,8 @@ if __name__ == '__main__':
                 if experiment_details["prefix"] == "CC":
                     raw_data, min_len = load_data(data_folder, 
                                                   "perturb_energy_before.log",
-        #                                           "perturb_energy_after.log", 
-                                                "final_energy.log",   # Energy of the whole step
+                                                  "final_energy.log",   # Energy of the whole step
                                                   "initial_cc.log", 
-#                                                   "after_anm_cc.log",
                                                   "after_minimization_cc.log", 
                                                   "step_time.log")
                 
@@ -98,7 +100,7 @@ if __name__ == '__main__':
                 rmsd_increments = process_after_perturb_rmsd(raw_data)[1:]
                 
                 mc = MetropolisMCSimulator(energy_increments)
-                acceptances[T][v1,v2] = mc.perform_simulation(min(200,len(energy_increments)), 20, T)
+                acceptances[T][v1,v2] = mc.perform_simulation(min(200,len(energy_increments)), 40, T)
                 avg_energy[T][v1,v2] = numpy.mean(energy_increments)
                 std_energy[T][v1,v2] = numpy.std(energy_increments)
                 avg_rmsd[T][v1,v2] = numpy.mean(rmsd_increments)
@@ -138,26 +140,6 @@ if __name__ == '__main__':
     acc_colors = {"high": "yellow","good":"green" ,"low":"red"}
     cat_to_float = {"high": 1.0, "good":0.5 ,"low": 0.0}
     
-    good_parameters = defaultdict(list)
-    cat_acceptances = defaultdict(dict)
-    for T in acceptance_temperatures:
-        for key in acceptances[T]:
-            acceptance_avg, acceptance_std = acceptances[T][key]
-            if acceptance_avg <= 1. and acceptance_avg > 0.35:
-                cat_acceptances[T][key] = "high"
-            elif acceptance_avg <= 0.35  and acceptance_avg > 0.25:
-                cat_acceptances[T][key] = "good"
-            else:
-                cat_acceptances[T][key] = "low"
-        for v1 in p1_keys:
-            for v2 in p2_keys:
-                if cat_acceptances[T][v1,v2] == "good":
-                    good_parameters[T].append((avg_rmsd[T][v1,v2]-std_rmsd[T][v1,v2], 
-                                               avg_rmsd[T][v1,v2]+std_rmsd[T][v1,v2],
-                                               avg_rmsd[T][v1,v2], 
-                                               p1, v1, 
-                                               p2, v2))
-    
     def prepare_subplots(row_len, col_len):
         if row_len > 1 or col_len > 1:
             f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
@@ -178,7 +160,7 @@ if __name__ == '__main__':
                 matrix[j][k] = acceptances[T][v1,v2][0]#cat_to_float[cat_acceptances[T][v1,v2]]
         ax = axes[i/row_len, i%row_len] 
         sns.heatmap(matrix, vmin = 0.0, vmax=1.0,#cmap=ListedColormap(['red', 'green', 'yellow']), 
-                    ax = ax, square = False, cbar = True, center = 0.5,
+                    ax = ax, square = False, cbar = True, center = 0.3,
                     annot = True)
         ax.set_xticklabels([str(i) for i in p2_keys])
         ax.set_yticklabels([str(i) for i in sorted(p1_keys, reverse=True)])
@@ -223,19 +205,42 @@ if __name__ == '__main__':
         plt.close()
         
     # for each displacement pick smaller temperature
-    good_parameters = {}
-    for T in acceptance_temperatures:
-        good_parameters[T] = []
-        for j,v1 in enumerate(p1_keys):
-            for k,v2 in enumerate(p2_keys):
-                    # range 0.25 0.35 
-                    if avg_rmsd[T][v1,v2]+std_rmsd[T][v1,v2] >= 0.25 and avg_rmsd[T][v1,v2]-std_rmsd[T][v1,v2] <= 0.35:
-                        good_parameters[T].append((avg_rmsd[T][v1,v2], v1, v2, rms(rmsf_ref,rmsf[T][v1,v2])))
     
-    print "T\tAcceptance\tdisp\trmsg\trms(rmsf)"
-    for T in good_parameters:
-        best_for_T = sorted(good_parameters[T], reverse=True)[0]
-        print T,"\t",
-        values = ["%.3f"%f for f in  best_for_T]
-        for val in values:print val,"\t",
-        print
+    results_per_parameters = defaultdict(list)
+    for T in acceptance_temperatures:
+        for key in acceptances[T]:
+            acceptance_avg, acceptance_std = acceptances[T][key]
+            rmsd_avg, rmsd_std = avg_rmsd[T][key], std_rmsd[T][key]
+            
+            min_acc_val = acceptance_avg-acceptance_std
+            max_acc_val = acceptance_avg+acceptance_std
+            
+            if (acceptance_avg >= 0.25 and acceptance_avg <= 0.35) or (min_acc_val >= 0.25 and min_acc_val <= 0.35) or (max_acc_val >= 0.25 and max_acc_val<=0.35):
+                
+                results_per_parameters[T].append((
+                                              acceptance_avg,
+                                              rms(rmsf_ref,rmsf[T][key]),
+                                              rmsd_avg,
+                                              key[0], 
+                                              key[1]))
+    
+#     print "T\tAcceptance\trms(rmsf)\trmsd\tp1\tp2"
+#     for T in sorted(results_per_parameters.keys()):
+#         results_per_parameters[T].sort(key=itemgetter(1), reverse=True) # big rmsds and rmsfs first
+#         results_per_parameters[T].sort(reverse=True) # big acceptances first (stable order)
+#         
+#         best_for_T = results_per_parameters[T][0]
+#         print T,"\t",
+#         for val in ["%.3f"%f for f in  best_for_T]:print val,"\t",
+#         print
+        
+    print "T\tAcceptance\trms(rmsf)\trmsd\tp1\tp2"
+    for T in sorted(results_per_parameters.keys()):
+        results_per_parameters[T].sort(key=itemgetter(1), reverse=True) # big rmsds and rmsfs first
+        results_per_parameters[T].sort(reverse=True) # big acceptances first (stable order)
+        
+        for result in results_per_parameters[T]:
+            print T,"\t",
+            for val in ["%.3f"%f for f in  result]:print val,"\t",
+            print
+
