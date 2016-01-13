@@ -36,12 +36,19 @@ if __name__ == '__main__':
     else:
         create_directory(options.results)
         
-    folders = glob.glob("CC_*")
-    workspaces = ["cc_closed_rmsg_dispf","cc_open_rmsg_dispf"]
-    workspace_titles = {"cc_closed_rmsg_dispf":"Closed",
-                        "cc_open_rmsg_dispf":"Open"}
-    workspace_colors = {"cc_closed_rmsg_dispf":"g",
-                        "cc_open_rmsg_dispf":"b"}
+#     folders = glob.glob("CC_*")
+#     workspaces = ["cc_closed_rmsg_dispf","cc_open_rmsg_dispf"]
+#     workspace_titles = {"cc_closed_rmsg_dispf":"Closed",
+#                         "cc_open_rmsg_dispf":"Open"}
+#     workspace_colors = {"cc_closed_rmsg_dispf":"g",
+#                         "cc_open_rmsg_dispf":"b"}
+    
+    folders = glob.glob("IC_*")
+    workspaces = ["ic_open_rmsg_dispf"]
+    workspace_titles = {"ic_open_rmsg_dispf":"Open"}
+    workspace_colors = {"ic_open_rmsg_dispf":"b"}
+    max_confs = 300
+    
     if options.data is None:    
         distances = {}
         for workspace in workspaces:
@@ -58,6 +65,9 @@ if __name__ == '__main__':
                         traj_file = os.path.join(inner_folder,"trajectory.pdb")
                         pdb = parsePDB(traj_file, subset='ca')
                         res_coords = pdb.select("resid 277 or resid 387").getCoordsets()
+                        if max_confs is not None:
+                            res_coords = res_coords[0:max_confs]
+                            
                         ds = []
                         for cys_coords, leu_coords in res_coords:
                             ds.append(norm(leu_coords-cys_coords))
@@ -77,7 +87,6 @@ if __name__ == '__main__':
 #         plt.show()
     
     temperatures = sorted(distances[distances.keys()[0]].keys())
-    temperatures.append(300)
     
     collapsed_values = {}
     for ws in workspaces:
@@ -111,7 +120,9 @@ if __name__ == '__main__':
     row_len = 3
     col_len = 3
     f, axes = prepare_subplots(row_len, col_len)
-    for i,T in enumerate(temperatures):
+    extra_temperatures = temperatures
+    extra_temperatures.extend([300,300])
+    for i,T in enumerate(extra_temperatures):
         ax = axes[i/row_len, i%row_len]
         handles = []
         labels = []
@@ -123,8 +134,9 @@ if __name__ == '__main__':
             handles.append(mpatches.Patch(color=workspace_colors[ws], label=ws))
         if i%row_len == 0:
             ax.set_ylabel("Distance($\AA$)")
-        if i/row_len == 1:
-            ax.set_xlabel("Steps")
+        if i/row_len == 2:
+            ax.set_xlabel("Steps (accepted)")
+        ax.set_title("T = %d"%T)
             
         ax.legend(handles, labels)
     plt.show()
