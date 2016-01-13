@@ -17,6 +17,7 @@ from pyRMSD.RMSDCalculator import RMSDCalculator
 import random
 from math import exp
 from _collections import defaultdict
+import matplotlib.pyplot as plt
 
 class LineParser:
     def __init__(self, tag, position, conversion, split_token = None):
@@ -242,8 +243,17 @@ def get_values_by_hue(val_x, val_y, hue_vals):
         exit(-1)
 
 def scatter_plot_by_hue(x, y, hue, colors):
-    import matplotlib.pyplot as plt
     vals_by_hue = get_values_by_hue(x, y, hue)
     for i,hue_key in enumerate(vals_by_hue):
         plt.scatter(vals_by_hue[hue_key]["x"],vals_by_hue[hue_key]["y"], label = str(hue_key), color = colors[i], alpha = 0.6)
-    
+
+def prepare_subplots(row_len, col_len):
+    if row_len > 1 or col_len > 1:
+        f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
+        f.subplots_adjust(hspace=0.4, wspace=0.3 )
+        f.set_size_inches(12, 12, forward=True)
+    else:
+        f = plt.gcf()
+        axes = {(0,0): plt.gca()}
+    return f, axes
+      

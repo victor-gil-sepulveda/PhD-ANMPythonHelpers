@@ -5,7 +5,8 @@ Created on 14/12/2015
 '''
 from optparse import OptionParser
 from nma_algo_char.common import load_control_json, create_directory,\
-    pair_parameter_values, parameter_value_to_string, MetropolisMCSimulator
+    pair_parameter_values, parameter_value_to_string, MetropolisMCSimulator,\
+    prepare_subplots
 import os
 from _collections import defaultdict
 from nma_algo_char.mode_application_analysis import load_cc_data, load_ic_data,\
@@ -134,18 +135,63 @@ if __name__ == '__main__':
     #-----------
     # PLOTS
     #-----------
-    all_temperatures = [300, 583, 866, 1150, 1432, 2000, 2568, 300, 300]
-    
     x = range(step_granularity, max_samples+1, step_granularity)
-    print x
-    for T in all_temperatures:
+    all_temperatures = [300, 583, 866, 1150, 1432, 2000, 2568, 300, 300]
+    row_len = 3
+    col_len = 3
+    color_p_p = {"CC":"blue","IC":"green"}
+    
+    f, axes = prepare_subplots(row_len, col_len)
+    for i,T in enumerate(all_temperatures):
         for prefix in ["IC","CC"]:
+            ax = axes[i/row_len, i%row_len]
+            ax.set_title("T = %d"%T)
+            if i%row_len == 0:
+                ax.set_ylabel("RMSD ($\AA$)")
+            if i/row_len == col_len-1:
+                ax.set_xlabel("Num. steps")
+            for key in rmsd[prefix]:
+                if key[0] == T: 
+                    y, ystd  = (numpy.array([r[0] for r in rmsd[prefix][key]]),
+                               numpy.array([r[1] for r in rmsd[prefix][key]]))
+                    ax.plot(x, y, label = prefix, color = color_p_p[prefix])
+                    ax.fill_between(x, y-ystd, y+ystd, facecolor=color_p_p[prefix], alpha=0.5)
+    plt.suptitle("RMSD")                   
+    plt.legend()
+    plt.show()
+    
+    f, axes = prepare_subplots(row_len, col_len)
+    for i,T in enumerate(all_temperatures):
+        for prefix in ["IC","CC"]:
+            ax = axes[i/row_len, i%row_len]
+            ax.set_title("T = %d"%T)
+            if i%row_len == 0:
+                ax.set_ylabel("Acceptance")
+            if i/row_len == col_len-1:
+                ax.set_xlabel("Num. steps")
             for key in acceptances[prefix]:
                 if key[0] == T: 
-                    print T, key
-                    y = rmsd[prefix][key]
-                    print x, y
-                    plt.plot(x,y,label = prefix)
-        plt.legend()
-        plt.show()
+                    y, ystd  = (numpy.array([r[0] for r in acceptances[prefix][key]])*100,
+                                numpy.array([r[1] for r in acceptances[prefix][key]])*100)
+                    ax.plot(x, y, label = prefix, color = color_p_p[prefix])
+                    ax.fill_between(x, y-ystd, y+ystd, facecolor=color_p_p[prefix], alpha=0.5)
+    plt.suptitle("Acceptance")   
+    plt.legend()
+    plt.show()
+    
+    f, axes = prepare_subplots(row_len, col_len)
+    for i,T in enumerate(all_temperatures):
+        for prefix in ["IC","CC"]:
+            ax = axes[i/row_len, i%row_len]
+            ax.set_title("T = %d"%T)
+            if i%row_len == 0:
+                ax.set_ylabel("RMSF")
+            if i/row_len == col_len-1:
+                ax.set_xlabel("Num. steps")
+            for key in acceptances[prefix]:
+                if key[0] == T: 
+                    ax.plot(x, rmsf[prefix][key], label = prefix, color = color_p_p[prefix])
+    plt.suptitle("Rmsf")                
+    plt.legend()
+    plt.show()
     
