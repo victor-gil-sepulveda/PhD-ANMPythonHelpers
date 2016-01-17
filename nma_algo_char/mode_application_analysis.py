@@ -454,6 +454,3 @@ if __name__ == '__main__':
                                                                     numpy.mean(bigger_than_0), numpy.std(bigger_than_0))
         
         print "Avg. time per step %.2f (%.2f)"%(numpy.mean(all_data["time_per_step"]), numpy.std(all_data["time_per_step"]))
-        
-        
-        # Does the ANM step energy increment correlate with the final energy increment?

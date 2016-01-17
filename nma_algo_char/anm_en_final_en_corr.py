@@ -18,6 +18,7 @@ import seaborn as sns
 import cPickle as pickle
 from anmichelpers.tools.measure import coords_rmsf
 from trajectory_comparison.compare_two_rmsfs import rms
+import scipy.stats
 
 if __name__ == '__main__':
     sns.set_style("whitegrid")
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     all_final_energies = {}
     
     ## ONLY FOR CC SIMULATIONS
-    temperatures = [300, 583, 866, 1150, 1432, 2000, 2568, 3000, 300]
+    temperatures = [300, 583, 866, 1150, 1432, 2000, 2568, 300, 300]
     for T in temperatures:
         all_anm_energies[T] = []
         all_final_energies[T] = []
@@ -90,21 +91,47 @@ if __name__ == '__main__':
                 filter_2.append(ener2[i])
         return numpy.array(filter_1), numpy.array(filter_2)
       
-    row_len = 3
-    col_len = 3
-    f, axes = prepare_subplots(row_len, col_len)
-    for i,T in enumerate(temperatures):
-        ax = axes[i/row_len, i%row_len]
-#         ax = plt.gca()
-        x , y = filter_outliers(all_anm_energies[T], all_final_energies[T])
-        ax.scatter(x, y, marker=',', c = "g", alpha = 0.3, lw = 0, s=0.6)
-        ax.set_title("T = %d"%T)
-        ax.set_xlim((-20,80))
-        ax.set_ylim((-40,60))
-        if i%row_len == 0:
-            ax.set_ylabel("Step U inc.")
-        if i/row_len == 2:
-            ax.set_xlabel("ANM U inc.")
+#     row_len = 3
+#     col_len = 3
+#     f, axes = prepare_subplots(row_len, col_len)
+#     for i,T in enumerate(temperatures):
+#         ax = axes[i/row_len, i%row_len]
+# #         ax = plt.gca()
+#         x , y = filter_outliers(all_anm_energies[T], all_final_energies[T])
+#         ax.scatter(x, y, marker=',', c = "g", alpha = 0.3, lw = 0, s=0.6)
+#         ax.set_title("T = %d"%T)
+#         ax.set_xlim((-20,80))
+#         ax.set_ylim((-40,60))
+#         if i%row_len == 0:
+#             ax.set_ylabel("Step U inc.")
+#         if i/row_len == 2:
+#             ax.set_xlabel("ANM U inc.")
+#     
+#     plt.show()       
+
+    for T in sorted(list(set(temperatures))):
+        ranked_anm_energies = scipy.stats.rankdata(numpy.array(all_anm_energies[T]))
+        ranked_final_energies = scipy.stats.rankdata(numpy.array(all_final_energies[T]))
+        scaled_ranked_anm_energies = ranked_anm_energies*numpy.max(ranked_final_energies)/numpy.max(ranked_anm_energies)
+        rho, p_val =  scipy.stats.spearmanr(scaled_ranked_anm_energies, ranked_final_energies)
+        print "%d\t%.3f\t%.3f"%(T, rho, p_val)
     
-    plt.show()       
-     
+    def filter_by_final_increment(anm_ener, final_ener, T):
+        filt_anm_ener = []
+        filt_final_ener = []
+        threshold_ener = MetropolisMCSimulator.energy_for_probability(0.1, T)
+        
+        for i in range(len(anm_ener)):
+            if final_ener[i]<threshold_ener:
+                filt_anm_ener.append(anm_ener[i])
+                filt_final_ener.append(final_ener[i])
+        
+        return filt_anm_ener, filt_final_ener, threshold_ener
+    
+    for T in sorted(list(set(temperatures))):
+        filt_anm_ener, filt_final_ener, threshold_ener = filter_by_final_increment(all_anm_energies[T], all_final_energies[T], T)
+        ranked_anm_energies = scipy.stats.rankdata(numpy.array(filt_anm_ener))
+        ranked_final_energies = scipy.stats.rankdata(numpy.array(filt_final_ener))
+        scaled_ranked_anm_energies = ranked_anm_energies*numpy.max(ranked_final_energies)/numpy.max(ranked_anm_energies)
+        rho, p_val =  scipy.stats.spearmanr(scaled_ranked_anm_energies, ranked_final_energies)
+        print "%d\t%d\t%.3f\t%.3f\t%.3f"%(T, len(filt_anm_ener), threshold_ener, rho, p_val)

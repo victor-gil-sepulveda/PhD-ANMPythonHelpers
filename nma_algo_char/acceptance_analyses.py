@@ -18,6 +18,7 @@ import cPickle as pickle
 from anmichelpers.tools.measure import coords_rmsf
 from trajectory_comparison.compare_two_rmsfs import rms
 from operator import itemgetter
+from nma_algo_char.acceptance_and_rmsf_from_logs import ref_rmsf_calculation
 
 if __name__ == '__main__':
     sns.set_style("whitegrid")
@@ -112,7 +113,7 @@ if __name__ == '__main__':
                 rmsf_coords = numpy.reshape(raw_data["coords_after"], (len(raw_data["coords_after"]), 
                                                                            len(raw_data["coords_after"][0])/3, 
                                                                            3))
-                rmsf[T][v1,v2] = coords_rmsf(rmsf_coords)
+                rmsf[T][v1,v2] = coords_rmsf(rmsf_coords[mc.who_is_accepted(T)])
                 
         def default_to_regular(d):
             if isinstance(d, defaultdict):
@@ -172,7 +173,11 @@ if __name__ == '__main__':
     if options.rmsf_ref:
         f, axes = prepare_subplots(row_len, col_len)
         rmsf_matrix = numpy.zeros((len(p1_keys), len(p2_keys)))
-        rmsf_ref = numpy.loadtxt(options.rmsf_ref)[:-1]
+        
+#         rmsf_ref = numpy.loadtxt(options.rmsf_ref)[:-1]
+        rmsf_ref = ref_rmsf_calculation(options.rmsf_ref)
+        rmsf_ref = rmsf_ref[:-1] # skip last capping CA
+        
         for i,T in enumerate(acceptance_temperatures):
             for j,v1 in enumerate(p1_keys):
                 for k,v2 in enumerate(p2_keys):

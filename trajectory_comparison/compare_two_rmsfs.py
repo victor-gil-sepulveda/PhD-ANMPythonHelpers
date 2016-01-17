@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 import os
 
 def rms(one, two):
-    return math.sqrt( numpy.dot(one-two, one-two)/len(one))
+    diff = one-two
+    return math.sqrt( numpy.dot(diff, diff)/len(one))
 
 if __name__ == '__main__':
     

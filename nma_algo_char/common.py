@@ -18,6 +18,7 @@ import random
 from math import exp
 from _collections import defaultdict
 import matplotlib.pyplot as plt
+import math
 
 class LineParser:
     def __init__(self, tag, position, conversion, split_token = None):
@@ -58,6 +59,11 @@ class MetropolisMCSimulator:
             experiment_acceptance.append(min(1.0,max(0.0,exp(-(beta*inc_u)))))
         return numpy.mean(experiment_acceptance), numpy.std(experiment_acceptance)
     
+    @classmethod
+    def energy_for_probability(cls, prob, temperature):
+        beta = MetropolisMCSimulator.BOLTZMANN_KCAL_MOL * temperature
+        return -math.log(prob)*beta
+    
     def perform_simulation(self, number_of_samples, number_of_tries, temperature):
         beta = 1.0/(MetropolisMCSimulator.BOLTZMANN_KCAL_MOL * temperature)
         experiment_acceptance = []
@@ -73,6 +79,16 @@ class MetropolisMCSimulator:
                         num_accepted += 1
             experiment_acceptance.append(float(num_accepted)/number_of_samples)
         return numpy.mean(experiment_acceptance), numpy.std(experiment_acceptance)
+    
+    def who_is_accepted(self, temperature):
+        accepted = []
+        beta = 1.0/(MetropolisMCSimulator.BOLTZMANN_KCAL_MOL * temperature)
+        
+        for i,energy_diff in enumerate(self.energy_increments):
+            prob = exp(-(beta*energy_diff))
+            if prob > random.random():
+                accepted.append(i)
+        return accepted
 
 def pair_parameter_values(parameter_keys, parameters):
     key1, key2 = parameter_keys[0], parameter_keys[1]
