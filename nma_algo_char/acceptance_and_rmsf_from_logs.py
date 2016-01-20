@@ -6,12 +6,13 @@ Created on Jan 15, 2016
 from nma_algo_char.mode_application_analysis import load_data, load_ic_data,\
     process_energy_differences
 import numpy
-from nma_algo_char.common import MetropolisMCSimulator
+from nma_algo_char.common import MetropolisMCSimulator, create_directory
 from anmichelpers.tools.measure import coords_rmsf
 from trajectory_comparison.compare_two_rmsfs import rms
 import matplotlib.pyplot as plt
 from optparse import OptionParser
 from pyRMSD.utils.proteinReading import Reader
+import os.path
 
 def load_data_from_multiple_processors(sim_type, num_procs, data_folder, max_samples = numpy.inf):
     # processors from 1 to num_procs-1 have data
@@ -46,6 +47,21 @@ def load_data_from_multiple_processors(sim_type, num_procs, data_folder, max_sam
     return all_raw_data
 
 
+def load_single_proc_data(sim_type, data_folder, max_samples = numpy.inf):
+    ## CAUTION: HARDCODED FOLDER ('info'). Must be extracted using the control file
+    if sim_type == "CC":
+        raw_data, _ = load_data(data_folder, 
+                                      "perturb_energy_before.log",
+                                      "final_energy.log",   # Energy of the whole step
+                                      "initial_cc.log", 
+                                      "after_minimization_cc.log", 
+                                      "step_time.log")
+    
+    if sim_type == "IC":
+        raw_data, _ = load_ic_data(data_folder, max_samples)
+    
+    return raw_data
+
 # Reference rmsf
 def ref_rmsf_calculation(reftraj):
     coords = Reader().readThisFile(reftraj).gettingOnlyCAs().read()
@@ -53,8 +69,8 @@ def ref_rmsf_calculation(reftraj):
     
 if __name__ == '__main__':
     data_folder = "info"
-    rmsf_reference = "/home/victor/Desktop/NMA_acceptance_T/pro_noh_md.pdb.rmsf"
-    reftraj = "/home/victor/Desktop/NMA_acceptance_T/pro_noh_md.pdb"
+#     rmsf_reference = "/home/victor/Desktop/NMA_acceptance_T/pro_noh_md.pdb.rmsf"
+    reftraj = "/media/victor/c2fe358b-c6f7-4562-b2b5-c8d825cc0ed7/MD/Shaw/pro_noh_md.pdb"
     
     parser = OptionParser()
     parser.add_option("--type", dest="sim_type")
@@ -64,7 +80,12 @@ if __name__ == '__main__':
     
     (options, args) = parser.parse_args()
     
-    raw_data = load_data_from_multiple_processors(options.sim_type, options.num_procs, data_folder)
+    create_directory(options.results_folder)
+    
+    if options.num_procs > 1:
+        raw_data = load_data_from_multiple_processors(options.sim_type, options.num_procs, data_folder)
+    else:
+        raw_data = load_single_proc_data(options.sim_type, data_folder)
         
     energy_increments = process_energy_differences(raw_data)[1:]
     mc = MetropolisMCSimulator(energy_increments)
@@ -81,10 +102,10 @@ if __name__ == '__main__':
     rmsf_ref = rmsf_ref[:-1] # skip last capping CA
     print "RMS(RMSF)", rms(rmsf, rmsf_ref)
     
-    plt.plot(rmsf_ref)
-    plt.plot(rmsf)
-    plt.show()
+    plt.plot(rmsf_ref, label = "MD")
+    plt.plot(rmsf, label="MC T = %d"%options.temperature)
+    plt.legend()
+    plt.savefig(os.path.join(options.results_folder,"rmsf.svg"))
     
-    numpy.savetxt("rmsf_ref", rmsf_ref)
-    numpy.savetxt("rmsf", rmsf)
+    open(os.path.join(options.results_folder,"acceptance.txt"),"w").write("%.3f (%.3f)"%acc)
     
