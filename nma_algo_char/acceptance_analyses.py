@@ -69,9 +69,11 @@ if __name__ == '__main__':
 #     row_len = 3
 #     col_len = 2
 #     max_samples = numpy.inf
+
     acceptance_temperatures = [300]
     row_len = 1
     col_len = 1
+    max_samples = numpy.inf
      
     if options.data is None:
         for T in acceptance_temperatures:

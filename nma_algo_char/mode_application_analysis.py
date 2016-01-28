@@ -44,9 +44,9 @@ def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step
                   len(data["coords_before"])
                   )
     for key in data:
-        data[key] = data[key][:min_len]
+        data[key] = data[key][1:min_len]
     
-    return data, min_len
+    return data, min_len-1
 
 def load_ic_data(data_folder, max_samples = numpy.inf):
     return load_data(data_folder, "ener_mc_move_before.log", "ener_mc_move_after.log",  
