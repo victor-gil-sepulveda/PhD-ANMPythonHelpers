@@ -4,31 +4,8 @@ Created on 14/9/2015
 @author: victor
 '''
 import sys
-from pyRMSD.RMSDCalculator import RMSDCalculator
 import numpy
-
-
-def calculate_rmsds(coord_set_ref, coord_set):
-    number_of_steps = min(coord_set_ref.shape[0],coord_set.shape[0])
-    number_of_coords = coord_set_ref.shape[1]
-    
-    print "Calculating RMSDs"
-    print "\t- Number of steps:",number_of_steps
-    print "\t- Number of coordinates:",number_of_coords
-    print "\t- Shapes (ref/other):", coord_set_ref.shape, coord_set.shape
-    
-    rmsds = []
-    for i in range(number_of_steps):
-        ref = numpy.reshape(coord_set_ref[i], (number_of_coords/3, 3))
-        conf = numpy.reshape(coord_set[i], (number_of_coords/3, 3))
-        
-        coords = numpy.array([ref, conf])
-        
-        calculator = RMSDCalculator(calculatorType = "QTRFIT_OMP_CALCULATOR",
-                                    fittingCoordsets = coords)
-        rmsds.append(calculator.oneVsFollowing(0)[0])
-    
-    return numpy.array(rmsds)
+from nma_algo_char.data_retrieval import calculate_rmsds
 
 if __name__ == '__main__':
     current_coords = numpy.delete(numpy.loadtxt(sys.argv[1]),0,1)

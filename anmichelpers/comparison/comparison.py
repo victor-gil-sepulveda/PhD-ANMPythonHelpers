@@ -6,15 +6,18 @@ from math import exp
 
 # For all measures see http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2350220/
 
-def overlap(mode_i, mode_j):
+def overlap(mode_i, mode_j, verbose = False):
     """
     Measure of the similarity between 2 modes.
     Overlap value is in the range [0,1] (1 means maximum overlap / similarity)
     Tama and Sanejouand 2001. Conformational change of proteins arising from normal mode calculations.
     """
+    if verbose:
+        print "norms", tools.norm(mode_i), tools.norm(mode_j)
     return numpy.abs(numpy.dot(mode_i, mode_j)) / (tools.norm(mode_i) * tools.norm(mode_j))
+#     return numpy.abs(numpy.dot(mode_i/tools.norm(mode_i), mode_j/tools.norm(mode_j))) / (tools.norm(mode_i) * tools.norm(mode_j))
 
-def cumulative_overlap(mode, mode_range):
+def cumulative_overlap(mode, mode_range, verbose = False):
     """
     Measure of similarity between one mode and a range of modes.
     
@@ -22,7 +25,9 @@ def cumulative_overlap(mode, mode_range):
     """
     cum_overlap = 0
     for i in range(len(mode_range)):
-        o = overlap(mode, mode_range[i])
+        o = overlap(mode, mode_range[i], verbose)
+        if verbose:
+            print "(",o,"*",o,") +",
         cum_overlap += o*o
     return math.sqrt(cum_overlap)
 
