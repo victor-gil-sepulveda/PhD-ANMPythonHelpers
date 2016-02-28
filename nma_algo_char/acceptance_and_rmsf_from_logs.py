@@ -67,14 +67,14 @@ if __name__ == '__main__':
     data_folder = "info"
     reftraj = "/home/victor/Desktop/Desktop/SRCKIN/MD/pro_noh_md.pdb"
 #     reftraj = "/media/victor/c2fe358b-c6f7-4562-b2b5-c8d825cc0ed7/MD/Shaw/pro_noh_md.pdb"
-    reftraj = "/home/victor/Desktop/Desktop/UBI/MD/opls_skip10.pdb"
+#     reftraj = "/home/victor/Desktop/Desktop/UBI/MD/opls_skip10.pdb"
     
     parser = OptionParser()
     parser.add_option("--type", dest="sim_type")
     parser.add_option("--results", dest="results_folder")
     parser.add_option("-t", type = "int", dest="temperature")
     parser.add_option("-n", default = 1, type  = "int", dest="num_procs")
-    parser.add_option("-n", default = False, action="store_true", dest="calc_distances")
+    parser.add_option("-d", default = False, action="store_true", dest="calc_distances")
     
     (options, args) = parser.parse_args()
     
@@ -107,6 +107,7 @@ if __name__ == '__main__':
                                                                            3))
     who_is_accepted = mc.who_is_accepted(options.temperature)
     rmsf = coords_rmsf(rmsf_coords[who_is_accepted])
+    numpy.savetxt("ic_m1.rmsf", rmsf)
     rmsf_ref = ref_rmsf_calculation(reftraj)
     rmsf_ref = rmsf_ref[:-1] # skip last capping CA
     rms_rmsf = rms(rmsf, rmsf_ref)
@@ -132,5 +133,6 @@ if __name__ == '__main__':
             distances.append(norm(coordset[128]-coordset[18]))
         plt.plot(distances)
         plt.savefig(os.path.join(options.results_folder,"domain_distances.svg"))
+        numpy.savetxt("ic_m1.dists", distances)
     
     

@@ -17,6 +17,25 @@ from anmichelpers.comparison.comparison import rmsip, cumulative_overlap,\
 from nma_algo_char.common import load_control_json, pair_parameter_values,\
     parameter_value_to_string, create_directory
 import anmichelpers.tools.tools as tools
+from prody.dynamics.anm import ANM
+from anmichelpers.writers.pronmd import ProdyNMDWriter
+import datetime
+
+def pad_non_calpha(cc_ca_eigvecs, ic_header):
+    ha = ic_header["atomnames"]
+    new_eigvecs = []
+    for eigvec in cc_ca_eigvecs:
+        new_eigvec = []
+        ca_index = 0
+        for atom_name in ha:
+            if atom_name == "CA":
+                offset = ca_index*3
+                new_eigvec.extend(eigvec[offset:offset+3])
+                ca_index += 1
+            else:
+                new_eigvec.extend([0.,0.,0.])
+        new_eigvecs.append(new_eigvec)
+    return numpy.array(new_eigvecs)
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -24,6 +43,14 @@ if __name__ == '__main__':
     parser.add_option("--results", dest="results_folder")
     
     (options, args) = parser.parse_args()
+    
+#     eigvecs = numpy.array([
+#                [1,2,3,4,5,6,7,8,9]
+#                ])
+#     has = { "atomnames": ["C","C","CA","C","CA","C","C","C","CA","C",]}
+#     
+#     print pad_non_calpha(eigvecs, has)
+    
     
     if not options.experiment:  
         parser.error('Experiment file not given')
@@ -56,22 +83,26 @@ if __name__ == '__main__':
                     "ubi_start.pdb":"1ubq"
                   }
     
-    sizes = [parsePDB(os.path.join("structs", pdb_file)).numResidues() for pdb_file in proteins]
+    structs = [parsePDB(os.path.join("structs", pdb_file)) for pdb_file in proteins]
+    structs_dict = dict(zip(proteins,structs))
+    sizes = [struct.numResidues() for struct in structs]
     size_per_protein = dict(zip(proteins, sizes)) 
     # order proteins per size
     size_ordered_proteins = [s[1] for s in sorted(zip(sizes,proteins))]
     
-    nmd_file_name = {"CC":"normalized_modes.1.nmd", "IC":"normalized_modes_cc.1.nmd"}
-    prefix_to_folder = {"CC":"cc", "IC":"ic"}
+    nmd_file_name = {"CC":"normalized_modes.1.nmd", "IC":"normalized_modes_cc.1.nmd","IC_FULL":"normalized_modes_cc_full.1.nmd"}
+    prefixes = {"CC":"CC", "IC":"IC", "IC_FULL":"IC"}
+    workspace_folder = {"CC":"cc", "IC":"ic", "IC_FULL":"ic"}
         
     # Load data
     experiment_details = load_control_json(options.experiment)   
     eigenvectors = defaultdict(lambda: defaultdict())
+    headers = defaultdict(lambda: defaultdict())
     
     prot_keys = []
     cutoff_keys= []
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
-        for prefix in ["CC","IC"]:
+        for sim_type in ["CC","IC","IC_FULL"]:
             if p1 =="prot": 
                 prot_keys.append(v1)
                 cutoff_keys.append(v2)
@@ -80,35 +111,45 @@ if __name__ == '__main__':
                 prot_keys.append(v2)
                 cutoff_keys.append(v1)
                 key = (v2,v1)
-            folder_name = "%s_%s_%s_%s_%s"%(prefix,
+            folder_name = "%s_%s_%s_%s_%s"%(prefixes[sim_type],
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
                                             experiment_details["parameter_abbv"][p2], parameter_value_to_string(v2))
             
-            rev_folder_name = "%s_%s_%s_%s_%s"%(prefix,
+            rev_folder_name = "%s_%s_%s_%s_%s"%(prefixes[sim_type],
                                             experiment_details["parameter_abbv"][p2], parameter_value_to_string(v2),
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1))
             
-            nmd_file_path = os.path.join(prefix_to_folder[prefix], folder_name, "info",  nmd_file_name[prefix])
-            rev_nmd_file_path = os.path.join(prefix_to_folder[prefix], rev_folder_name, "info",  nmd_file_name[prefix])
+            nmd_file_path = os.path.join(workspace_folder[sim_type], folder_name, "info",  nmd_file_name[sim_type])
+            rev_nmd_file_path = os.path.join(workspace_folder[sim_type], rev_folder_name, "info",  nmd_file_name[sim_type])
             
             try:
-                _, _eigenvectors, _ = ProdyNMDParser.read(nmd_file_path)
-                eigenvectors[prefix][key] = _eigenvectors
+                _, _eigenvectors, header = ProdyNMDParser.read(nmd_file_path)
+                eigenvectors[sim_type][key] = _eigenvectors
+                headers[sim_type][key] = header
             except:
                 try:
-                    _, _eigenvectors, _ = ProdyNMDParser.read(rev_nmd_file_path)
-                    eigenvectors[prefix][key] = _eigenvectors
+                    _, _eigenvectors, header = ProdyNMDParser.read(rev_nmd_file_path)
+                    eigenvectors[sim_type][key] = _eigenvectors
+                    headers[sim_type][key] = header
                 except IOError, e:
                     print os.path.join(rev_nmd_file_path), "NOT FOUND"
-                    eigenvectors[prefix][key] = None
-                    
-            ##
-            ## OJO! ESTA NORMALIZACION NO SE TENDRIA QUE HACER AQUI!!! DEBERIA VENIR DE SERIE!!
-            ##
-            for mode in range(len(eigenvectors[prefix][key])):
-                norm = tools.norm(numpy.array(eigenvectors[prefix][key][mode]))
-                eigenvectors[prefix][key][mode] = numpy.array(eigenvectors[prefix][key][mode]) / norm
-                print tools.norm(eigenvectors[prefix][key][mode])
+                    eigenvectors[sim_type][key] = None
+    
+    eigenvectors["CC_FULL"] = {}
+    for protein in proteins:
+        for cutoff in range(7,14):
+            #eigenvectors["CC_FULL"][key] = pad_non_calpha(eigenvectors["CC"][key], headers["IC_FULL"][key])
+            
+#             print protein, cutoff, len(eigenvectors["IC_FULL"][(protein,cutoff)][0]), len(structs_dict[protein].select("heavy").getCoordsets()[0])*3
+#             print datetime.datetime.now().time()
+#             heavy_atoms = structs_dict[protein].select("heavy")
+#             anm = ANM()
+#             anm.buildHessian(heavy_atoms,cutoff = cutoff)     
+#             anm.calcModes(30)
+#             ProdyNMDWriter.write("%s_%s"%(protein, cutoff), anm.getEigvals(), anm.getEigvecs().T, {"atomnames":heavy_atoms.getNames(),
+#                                             "coordinates":numpy.flatten(heavy_atoms.getCoordsets())})  
+            _, full_cc_eigvec, _ = ProdyNMDParser.read("%s_%s.nmd"%(protein, cutoff))
+            eigenvectors["CC_FULL"][(protein, cutoff)] = full_cc_eigvec
     
     MAX_EIGEN = 30
     NUM_MODES_TO_EXPLAIN_ANOTHER_MODE_CO = 10 # for cumulative overlap
@@ -130,28 +171,26 @@ if __name__ == '__main__':
         for protein in size_ordered_proteins:
             key = (protein, cutoff)
             cc_eigenvectors = eigenvectors["CC"][key]
+            cc_full_eigenvectors = eigenvectors["CC_FULL"][key]
             ic_eigenvectors = eigenvectors["IC"][key]
+            ic_full_eigenvectors = eigenvectors["IC_FULL"][key]
             if cc_eigenvectors is not None and ic_eigenvectors is not None:
                 cum_overlaps_ic_explained_by_cc = {}
                 cum_overlaps_cc_explained_by_ic = {}
                 deg_of_collectivity_cc = []
                 deg_of_collectivity_ic = []
                 for i in range(NUM_MODES_TO_EXPLAIN_ANOTHER_MODE_CO):
-                    print protein, key, i, tools.norm(ic_eigenvectors[i]), tools.norm(cc_eigenvectors[i])
-                    cum_overlaps_ic_explained_by_cc[i]  = cumulative_overlap(ic_eigenvectors[i],cc_eigenvectors[:NUM_MODES_TO_EXPLAIN_ANOTHER_MODE_CO])
-                    cum_overlaps_cc_explained_by_ic[i]  = cumulative_overlap(cc_eigenvectors[i],ic_eigenvectors[:NUM_MODES_TO_EXPLAIN_ANOTHER_MODE_CO])
-                    if protein == "ubi_start.pdb" and i == 1 and cutoff == 9:
-                        print "***"
-                        cumulative_overlap(cc_eigenvectors[i],
-                                           ic_eigenvectors[:NUM_MODES_TO_EXPLAIN_ANOTHER_MODE_CO],
-                                           verbose = True)
+                    cum_overlaps_ic_explained_by_cc[i]  = cumulative_overlap(ic_full_eigenvectors[i],
+                                                                             cc_full_eigenvectors[:NUM_MODES_TO_EXPLAIN_ANOTHER_MODE_CO])
+                    cum_overlaps_cc_explained_by_ic[i]  = cumulative_overlap(cc_full_eigenvectors[i],
+                                                                             ic_full_eigenvectors[:NUM_MODES_TO_EXPLAIN_ANOTHER_MODE_CO])
                 
                 for i in range(MAX_EIGEN):
                     deg_of_collectivity_ic.append(degree_of_collectivity(ic_eigenvectors[i], normalize=True))
                     deg_of_collectivity_cc.append(degree_of_collectivity(cc_eigenvectors[i], normalize=True))
                 all_ic_cc_overlaps[protein] = cum_overlaps_ic_explained_by_cc
                 all_cc_ic_overlaps[protein] = cum_overlaps_cc_explained_by_ic
-                all_rmsip[protein] = [(last_freq, rmsip(cc_eigenvectors[0:last_freq], ic_eigenvectors[0:last_freq])) for last_freq in range(5, MAX_EIGEN+1,5)]
+                all_rmsip[protein] = [(last_freq, rmsip(cc_full_eigenvectors[0:last_freq], ic_full_eigenvectors[0:last_freq])) for last_freq in range(5, MAX_EIGEN+1,5)]
                 all_doc_cc[protein] = deg_of_collectivity_cc
                 all_doc_ic[protein] = deg_of_collectivity_ic
             avg_cc_collectivity_per_cutoff[protein][cutoff] = numpy.mean(deg_of_collectivity_cc)
