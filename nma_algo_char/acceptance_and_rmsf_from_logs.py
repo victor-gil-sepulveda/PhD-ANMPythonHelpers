@@ -35,7 +35,7 @@ def load_data_from_multiple_processors(sim_type, num_procs, data_folder, max_sam
                              "ener_mc_move_after.p%d.log"%proc,  
                              "ca_mc_move_before.p%d.log"%proc, 
                              "ca_mc_move_after.p%d.log"%proc, 
-                             "step_time.p%d.log"%proc,
+                             "ANM_step_time.p%d.log"%proc,
                              max_samples)
         min_lens.append(min_len)
         
@@ -91,16 +91,16 @@ if __name__ == '__main__':
     create_directory(options.results_folder)
     
     if options.num_procs > 1:
-        raw_data, min_lens = load_data_from_multiple_processors(options.sim_type, options.num_procs, data_folder)
+        raw_data, min_lens = load_data_from_multiple_processors(options.sim_type, options.num_procs, data_folder, max_samples = 5000)
     else:
-        raw_data, min_len = load_single_proc_data(options.sim_type, data_folder)
+        raw_data, min_len = load_single_proc_data(options.sim_type, data_folder, max_samples = 5000)
     
     
     ####################
     # Acceptance
     ####################
     
-    energy_increments = process_energy_differences(raw_data)[1:]
+    energy_increments = process_energy_differences(raw_data)
     mc = MetropolisMCSimulator(energy_increments)
     acc = mc.perform_simulation(min(200,len(energy_increments)), 40, options.temperature)
     print "Acceptance ", acc

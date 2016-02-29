@@ -50,7 +50,7 @@ def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step
 
 def load_ic_data(data_folder, max_samples = numpy.inf):
     return load_data(data_folder, "ener_mc_move_before.log", "ener_mc_move_after.log",  
-                     "ca_mc_move_before.log", "ca_mc_move_after.log", "step_time.log",
+                     "ca_mc_move_before.log", "ca_mc_move_after.log", "ANM_step_time.log",
                      max_samples)
     
 def load_cc_data(data_folder):
