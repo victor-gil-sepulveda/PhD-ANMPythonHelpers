@@ -17,6 +17,7 @@ import scipy.stats
 import cPickle as pickle
 from nma_algo_char.data_retrieval import load_ic_data, load_cc_data,\
     process_after_perturb_rmsd, process_energy_differences, get_mode_frequencies
+from imghdr import what
 
 def remove_energy_outlayers(all_data, ENERGY_LABEL):
     outlayer_margin  = int(len(all_data[ENERGY_LABEL])*0.98)
@@ -77,7 +78,12 @@ if __name__ == '__main__':
     nmd_file_name = {"CC":"normalized_modes.1.nmd", 
                      "IC":"normalized_modes_cc.1.nmd"}
     
+    v1s = []
+    v2s = []
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
+        v1s.append(v1)
+        v2s.append(v2)
+        
         folder_name = "%s_%s_%s_%s_%s"%(experiment_details["prefix"],
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
                                             experiment_details["parameter_abbv"][p2], parameter_value_to_string(v2))
@@ -86,14 +92,14 @@ if __name__ == '__main__':
             raw_data, data_len = load_cc_data(os.path.join(workspace, 
                                                           folder_name,
                                                           options.folder),
-                                             full_pele_energy = True,
-                                             skip_first = 50)
+                                             full_pele_energy = False,
+                                             skip_first = 15)
         
         if experiment_details["prefix"] == "IC":
             raw_data, data_len = load_ic_data(os.path.join(workspace, 
                                                           folder_name,
                                                           options.folder),
-                                             skip_first = 50)
+                                             skip_first = 15)
 
         # Start processing        
         modes = raw_data["modes"]
@@ -121,16 +127,19 @@ if __name__ == '__main__':
                            numpy.std(rmsd_increments))
         avg_energy[v1,v2] = numpy.mean(energy_increments)
         std_energy[v1,v2] = numpy.std(energy_increments)
+        print std_energy[v1,v2]
         avg_time[v1,v2] = (numpy.mean(raw_data["time_per_step"]),
                            numpy.std(raw_data["time_per_step"]))
         norm_rmsd[v1,v2] = numpy.array(rmsd_increments) / numpy.max(rmsd_increments)
         norm_energy[v1,v2] = numpy.array(energy_increments) / numpy.max(numpy.abs(energy_increments))
         modes_p_v[v1,v2] = numpy.array(modes)+1 # Modes will start from index 1 in the plots
         mode_frequencies[v1,v2] = _mode_frequencies
-        
-           
+    
+    v1s = sorted(list(set(v1s)))
+    v2s = sorted(list(set(v2s)))
     
     # Remove outliers
+    energy_with_outlayers = numpy.array(all_data[ENERGY_LABEL])
     ener_low, ener_high = remove_energy_outlayers(all_data, ENERGY_LABEL)
     
     # Save all_data in pickled format
@@ -293,6 +302,43 @@ if __name__ == '__main__':
         plt.ylabel("Acceptance")   
         plt.savefig(os.path.join(options.results_folder,os.path.basename(workspace),os.path.basename(workspace)+"_energy_vs_acc.svg"))
         plt.close()
+        
+        # Do energy vs rmsd
+        plt.figure()
+        keys = sorted(avg_rmsd.keys())
+        labels = []
+        colors = sns.color_palette("hls", len(keys))
+        markers = ["o", "s", "h", "*", "+", "D"]
+        colors = sns.color_palette("hls", len(v1s))
+        for i, v1 in enumerate(v1s):
+            for j,v2 in enumerate(v2s):
+                key = (v1,v2)
+                x = avg_rmsd[key][0]
+                x_err =  avg_rmsd[key][1]
+                y = avg_energy[key]
+                y_err = std_energy[key]
+                label = "%.2f %.2f"%key
+                plt.errorbar(x, y, 
+                             xerr=x_err, yerr=y_err, 
+                             marker=markers[j], 
+                             color=colors[i],
+                             label = label, mec='black',mew=1)
+                plt.scatter(x, y, marker=markers[j], linewidths=1,  edgecolors='black', color=colors[i])
+        plt.xlabel("RMSD")
+        plt.ylabel("$\Delta U$")    
+        plt.legend()
+        plt.savefig(os.path.join(options.results_folder,
+                                 os.path.basename(workspace),
+                                 os.path.basename(workspace)+"_rmsd_vs_energy_avgs.svg"))
+        plt.close()
+         
+
+        other_results = open(os.path.join(options.results_folder,
+                                 os.path.basename(workspace),"other_results.txt"),"w")
+        
+        def save_result(what):
+            print what
+            other_results.write(what+"\n")
 
         #---------------------------------------        
         # Energy vs RMSD correlation
@@ -305,7 +351,7 @@ if __name__ == '__main__':
         else:
             ranked_rmsd *= min_rank /numpy.max(ranked_rmsd)
         rho, p_val =  scipy.stats.spearmanr(ranked_rmsd, ranked_energy)
-        print "Does the RMSD and energy inc. correlate? Association force (rho): %.2f (%.2f)"%(rho,p_val)
+        save_result( "Does the RMSD and energy inc. correlate? Association force (rho): %.2f (%.2f)"%(rho,p_val))
         
         #---------------------------------------        
         # Displacement (normalized) vs Frequency
@@ -331,7 +377,7 @@ if __name__ == '__main__':
         scaled_ranked_norm_rmsd = ranked_norm_rmsd*10./numpy.max(ranked_norm_rmsd)
         rho, p_val =  scipy.stats.spearmanr(scaled_ranked_norm_rmsd, all_modes)
         # The smaller the p-value is, the better (evidence agains the hypothesis that variables are uncorrelated)
-        print "Does the (ANM) norm. RMSD depend on the frequency of the mode? Association force (rho):",rho,"p-value:",p_val
+        save_result(  "Does the (ANM) norm. RMSD depend on the frequency of the mode? Association force (rho): %.3f p-value: %.3f"%(rho,p_val))
         
         #--------------------------------------------        
         # Energy increment (normalized) vs Frequency
@@ -343,7 +389,7 @@ if __name__ == '__main__':
         ranked_norm_energies =  scipy.stats.rankdata(all_norm_energies)
         scaled_ranked_norm_energies = ranked_norm_energies*10./numpy.max(ranked_norm_energies)
         rho, p_val =  scipy.stats.spearmanr(ranked_norm_energies, all_modes)
-        print "Does the (ANM) norm. energy increment depend on the frequency of the mode? Association force (rho):",rho,"p-value:",p_val
+        save_result( "Does the (ANM) norm. energy increment depend on the frequency of the mode? Association force (rho): %.3f p-value: %.3f"%(rho,p_val))
         
         #-----------------------------------------------------------
         # Time per step (cont. dep.) and p1, p2 (cat. ranked ind.)
@@ -355,7 +401,7 @@ if __name__ == '__main__':
             # norm range of time to range of p
             ranked_time *= numpy.max(ranked_p)/numpy.max(ranked_time)
             rho, p_val =  scipy.stats.spearmanr(ranked_time, ranked_p)
-            print "Does the time per (ANM) step depend on %s? Association force (rho):"%p,rho,"p-value:",p_val
+            save_result( "Does the time per (ANM) step depend on %s? Association force (rho): %.3f p-value: %.3f"%(p,rho,p_val))
         
         
         #-----------------------------------------------------------
@@ -367,7 +413,7 @@ if __name__ == '__main__':
             ranked_rmsd = scipy.stats.rankdata(numpy.array(all_data[RMSD_LABEL]))
             scaled_ranked_rmsd = ranked_rmsd*numpy.max(ranked_p)/numpy.max(ranked_rmsd)
             rho, p_val =  scipy.stats.spearmanr(scaled_ranked_rmsd, ranked_p)
-            print "Does the (ANM) RMSD depend on %s? Association force (rho):"%p,rho,"p-value:",p_val
+            save_result( "Does the (ANM) RMSD depend on %s? Association force (rho): %.3f p-value: %.3f"%(p,rho,p_val))
         
         #-----------------------------------------------------------
         # Energy increment (cont. dep.) and p1, p2 (cat. ranked ind.)
@@ -376,19 +422,21 @@ if __name__ == '__main__':
             ranked_p = scipy.stats.rankdata(numpy.array(all_data[p]))
             ranked_energies = scipy.stats.rankdata(numpy.array(all_data[ENERGY_LABEL]))
             scaled_ranked_energies = ranked_energies*numpy.max(ranked_p)/numpy.max(ranked_energies)
-            print len(scaled_ranked_norm_energies), len(ranked_p)
-            rho, p_val =  scipy.stats.spearmanr(scaled_ranked_norm_energies, ranked_p)
-            print "Does the (ANM) Energy increment depend on %s? Association force (rho):"%p,rho,"p-value:",p_val
+            rho, p_val =  scipy.stats.spearmanr(scaled_ranked_energies, ranked_p)
+            save_result( "Does the (ANM) Energy increment depend on %s? Association force (rho): %.3f p-value: %.3f"%(p,rho,p_val))
         
         # Energy absolute values
         smaller_than_0 = []
         bigger_than_0 = []
-        for energy in all_data[ENERGY_LABEL]:
+        for energy in energy_with_outlayers:
             if energy <= 0:
                 smaller_than_0.append(energy)
             else:
                 bigger_than_0.append(energy)
-        print "[Energy] Number of <0: %.2f Mean of > 0: %.2f (%.2f)"%(100*float(len(smaller_than_0)) /len(all_data[ENERGY_LABEL]), 
-                                                                    numpy.mean(bigger_than_0), numpy.std(bigger_than_0))
+                
+        save_result( "[Energy] Number of <0: %.2f Mean of > 0: %.2f (%.2f)"%(100*float(len(smaller_than_0)) /len(all_data[ENERGY_LABEL]), 
+                                                                    numpy.mean(bigger_than_0), numpy.std(bigger_than_0)))
         
-        print "Avg. time per step %.2f (%.2f)"%(numpy.mean(all_data["time_per_step"]), numpy.std(all_data["time_per_step"]))
+        save_result( "Avg. time per step %.2f (%.2f)"%(numpy.mean(all_data["time_per_step"]), numpy.std(all_data["time_per_step"])))
+        
+        other_results.close()
