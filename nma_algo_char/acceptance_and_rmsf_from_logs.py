@@ -3,8 +3,6 @@ Created on Jan 15, 2016
 
 @author: victor
 '''
-from nma_algo_char.mode_application_analysis import load_data, load_ic_data,\
-    process_energy_differences
 import numpy
 from nma_algo_char.common import MetropolisMCSimulator, create_directory
 from anmichelpers.tools.measure import coords_rmsf
@@ -15,28 +13,24 @@ from pyRMSD.utils.proteinReading import Reader
 import os.path
 from anmichelpers.tools.tools import norm
 import seaborn as sns
+from nma_algo_char.data_retrieval import load_cc_data, load_cc_data_from_proc,\
+    load_ic_data_from_proc, load_ic_data, process_energy_differences
 
-def load_data_from_multiple_processors(sim_type, num_procs, data_folder, max_samples = numpy.inf):
+def load_data_from_multiple_processors(sim_type, num_procs, data_folder, skip_first,  max_samples = numpy.inf):
     # processors from 1 to num_procs-1 have data
     all_raw_data = {}
     min_lens = []
     for proc in range(1,num_procs):
         if sim_type == "CC":
-            raw_data, min_len = load_data(data_folder, 
-                                 "perturb_energy_before.p%d.log"%proc, 
-                                 "final_energy.p%d.log"%proc,  
-                                 "initial_cc.p%d.log"%proc, 
-                                 "after_minimization_cc.p%d.log"%proc, 
-                                 "step_time.p%d.log"%proc,
-                                 max_samples)
+            raw_data, min_len = load_cc_data_from_proc(data_folder,
+                                                        proc,
+                                                        skip_first,
+                                                        max_samples)
         if sim_type == "IC":
-            raw_data, min_len = load_data(data_folder, 
-                             "ener_mc_move_before.p%d.log"%proc, 
-                             "ener_mc_move_after.p%d.log"%proc,  
-                             "ca_mc_move_before.p%d.log"%proc, 
-                             "ca_mc_move_after.p%d.log"%proc, 
-                             "ANM_step_time.p%d.log"%proc,
-                             max_samples)
+            raw_data, min_len = load_ic_data_from_proc(data_folder, 
+                                                        proc,
+                                                        skip_first,
+                                                        max_samples)
         min_lens.append(min_len)
         
         for key in raw_data:
@@ -52,18 +46,13 @@ def load_data_from_multiple_processors(sim_type, num_procs, data_folder, max_sam
     return all_raw_data, min_lens
 
 
-def load_single_proc_data(sim_type, data_folder, max_samples = numpy.inf):
+def load_single_proc_data(sim_type, data_folder, skip_first, max_samples = numpy.inf):
     ## CAUTION: HARDCODED FOLDER ('info'). Must be extracted using the control file
     if sim_type == "CC":
-        raw_data, min_len = load_data(data_folder, 
-                                      "perturb_energy_before.log",
-                                      "final_energy.log",   # Energy of the whole step
-                                      "initial_cc.log", 
-                                      "after_minimization_cc.log", 
-                                      "step_time.log")
+        raw_data, min_len = load_cc_data(data_folder, skip_first, full_pele_energy=True, max_samples= max_samples)
     
     if sim_type == "IC":
-        raw_data, min_len = load_ic_data(data_folder, max_samples)
+        raw_data, min_len = load_ic_data(data_folder, skip_first, max_samples=max_samples)
     
     return raw_data, min_len
 
@@ -75,31 +64,34 @@ def ref_rmsf_calculation(reftraj):
 if __name__ == '__main__':
     sns.set_style("whitegrid")
     
-    
     data_folder = "info"
-#     rmsf_reference = "/home/victor/Desktop/NMA_acceptance_T/pro_noh_md.pdb.rmsf"
-    reftraj = "/media/victor/c2fe358b-c6f7-4562-b2b5-c8d825cc0ed7/MD/Shaw/pro_noh_md.pdb"
+    reftraj = "/home/victor/Desktop/Desktop/SRCKIN/MD/pro_noh_md.pdb"
+#     reftraj = "/media/victor/c2fe358b-c6f7-4562-b2b5-c8d825cc0ed7/MD/Shaw/pro_noh_md.pdb"
+#     reftraj = "/home/victor/Desktop/Desktop/UBI/MD/opls_skip10.pdb"
     
     parser = OptionParser()
     parser.add_option("--type", dest="sim_type")
     parser.add_option("--results", dest="results_folder")
     parser.add_option("-t", type = "int", dest="temperature")
-    parser.add_option("-n", type  = "int", dest="num_procs")
+    parser.add_option("-n", default = 1, type  = "int", dest="num_procs")
+    parser.add_option("-d", default = False, action="store_true", dest="calc_distances")
     
     (options, args) = parser.parse_args()
     
     create_directory(options.results_folder)
     
     if options.num_procs > 1:
-        raw_data, min_lens = load_data_from_multiple_processors(options.sim_type, options.num_procs, data_folder, max_samples = 5000)
+        raw_data, min_lens = load_data_from_multiple_processors(options.sim_type, 
+                                                                options.num_procs, 
+                                                                data_folder,
+                                                                10)
     else:
-        raw_data, min_len = load_single_proc_data(options.sim_type, data_folder, max_samples = 5000)
+        raw_data, min_len = load_single_proc_data(options.sim_type, data_folder, 10)
     
     
     ####################
     # Acceptance
     ####################
-    
     energy_increments = process_energy_differences(raw_data)
     mc = MetropolisMCSimulator(energy_increments)
     acc = mc.perform_simulation(min(200,len(energy_increments)), 40, options.temperature)
@@ -115,7 +107,7 @@ if __name__ == '__main__':
                                                                            3))
     who_is_accepted = mc.who_is_accepted(options.temperature)
     rmsf = coords_rmsf(rmsf_coords[who_is_accepted])
-#     rmsf_ref = numpy.loadtxt(rmsf_reference)[:-1]
+    numpy.savetxt("ic_m1.rmsf", rmsf)
     rmsf_ref = ref_rmsf_calculation(reftraj)
     rmsf_ref = rmsf_ref[:-1] # skip last capping CA
     rms_rmsf = rms(rmsf, rmsf_ref)
@@ -128,17 +120,19 @@ if __name__ == '__main__':
     plt.close()
     open(os.path.join(options.results_folder,"rms_rmsf.txt"),"w").write("%.3f"%rms_rmsf)
 
-    ####################
-    # Domain distance
-    ####################    
-    # Position of the atoms to measure distance
-    # CYS:277:CA -> res = 18
-    # LEU:387:CA -> res = 259
-    coords = rmsf_coords[who_is_accepted]
-    distances = []
-    for coordset in coords:
-        distances.append(norm(coordset[128]-coordset[18]))
-    plt.plot(distances)
-    plt.savefig(os.path.join(options.results_folder,"domain_distances.svg"))
+    if options.calc_distances:
+        ####################
+        # Domain distance
+        ####################    
+        # Position of the atoms to measure distance
+        # CYS:277:CA -> res = 18
+        # LEU:387:CA -> res = 259
+        coords = rmsf_coords[who_is_accepted]
+        distances = []
+        for coordset in coords:
+            distances.append(norm(coordset[128]-coordset[18]))
+        plt.plot(distances)
+        plt.savefig(os.path.join(options.results_folder,"domain_distances.svg"))
+        numpy.savetxt("ic_m1.dists", distances)
     
     

@@ -5,98 +5,42 @@ Created on Nov 19, 2015
 """
 import numpy
 import os
-from min_bias.min_bias_calc import calculate_rmsds
 from optparse import OptionParser
 from nma_algo_char.common import load_control_json, pair_parameter_values,\
-    parameter_value_to_string, create_directory, LineCounter, LineParser,\
-    MetropolisMCSimulator, get_values_by_hue, scatter_plot_by_hue
+    parameter_value_to_string, create_directory, MetropolisMCSimulator,\
+    scatter_plot_by_hue
 from collections import defaultdict
 from pandas.core.frame import DataFrame
 import matplotlib.pyplot as plt
 import pandas as pd
-from anmichelpers.parsers.pronmd import ProdyNMDParser
-import math
 import scipy.stats
 import cPickle as pickle
+from nma_algo_char.data_retrieval import load_ic_data, load_cc_data,\
+    process_after_perturb_rmsd, process_energy_differences, get_mode_frequencies
 
-def load_energy(data_folder, energy_file):
-    return numpy.loadtxt(os.path.join(data_folder,energy_file)).T[1]
-
-def load_data(data_folder, e_before, e_after,  coords_before, coords_after, step_time, max_samples = numpy.inf):
-    data = {}
-    # energies
-    print "e_after folder" , os.path.join(data_folder,e_after)
-    data["e_after"] = numpy.loadtxt(os.path.join(data_folder,e_after)).T[1]
-    data["e_before"] = numpy.loadtxt(os.path.join(data_folder,e_before)).T[1]
+def remove_energy_outlayers(all_data, ENERGY_LABEL):
+    outlayer_margin  = int(len(all_data[ENERGY_LABEL])*0.98)
+    ener_low = min(sorted(all_data[ENERGY_LABEL], reverse = True)[:outlayer_margin])
+    ener_high = max(sorted(all_data[ENERGY_LABEL])[:outlayer_margin])
     
-    # coordinates
-    data["coords_after"] = numpy.delete(numpy.loadtxt(os.path.join(data_folder, coords_after)),0,1) # -> delete first column (index=
-    data["coords_before"] = numpy.delete(numpy.loadtxt(os.path.join(data_folder, coords_before)),0,1)
+
+    indices = numpy.logical_and(all_data[ENERGY_LABEL] < ener_high,
+                                all_data[ENERGY_LABEL] > ener_low)
+                                 
+    for label in all_data:
+        print label , "initial len ", len(all_data[label]),
+        all_data[label] = numpy.array(all_data[label])
+        all_data[label] = all_data[label][indices]
+        print "final len ", len(all_data[label])
     
-    # time per step
-    data["time_per_step"] = numpy.loadtxt(os.path.join(data_folder, step_time)).T[1]
-    
-    # trim data as there can be an excess of 1
-    min_len = min(max_samples,
-                  len(data["e_after"]), 
-                  len(data["e_before"]), 
-                  len(data["coords_after"]), 
-                  len(data["coords_before"])
-                  )
-    for key in data:
-        data[key] = data[key][:min_len]
-    
-    return data, min_len
-
-def load_ic_data(data_folder, max_samples = numpy.inf):
-    return load_data(data_folder, "ener_mc_move_before.log", "ener_mc_move_after.log",  
-                     "ca_mc_move_before.log", "ca_mc_move_after.log", "ANM_step_time.log",
-                     max_samples)
-    
-def load_cc_data(data_folder):
-    return load_data(data_folder, "perturb_energy_before.log", "perturb_energy_after.log",  
-                     "initial_cc.log", "after_anm_cc.log", "step_time.log")
-
-def process_energy_differences(data):
-    return data["e_after"] - data["e_before"]
-
-def process_after_perturb_rmsd(data):
-    return calculate_rmsds(data["coords_before"], data["coords_after"])
-
-def def_get_data_from_output_file(out_path):
-    out_file = open(out_path)
-    timesConvergedLineCounter = LineCounter("DBG: RELAX CLASH GRAD has converged")
-    relaxIterationsParser = LineParser("DBG: RELAX CLASH GRAD - Iterations performed:", 7, int)
-    for line in out_file:
-        timesConvergedLineCounter.parse_line(line)
-        relaxIterationsParser.parse_line(line)
-    out_file.close()
-    return relaxIterationsParser.data, timesConvergedLineCounter.counter
-
-def get_data_from_log(log_path):
-    PELEStepTimeParser = LineParser("Total step time:", 3, float)
-    PickedModeParser = LineParser("Picked mode:", 2, int)
-    for line in open(log_path):
-        PELEStepTimeParser.parse_line(line)
-        PickedModeParser.parse_line(line)
-    return PELEStepTimeParser.data , PickedModeParser.data
-
-def process_modes(NMA_type, modes, num_iterations = 10):
-    if NMA_type == "CC":
-        return modes
-    if NMA_type == "IC":
-        #print "DBG", "IC"
-        # in CC the main picker will output the message once, then the NMA IC pickers. We need to eliminate the first ones.
-        return numpy.array(modes)[(numpy.arange(len(modes))%(num_iterations+1) != 0)]
-
-def save_relax_iterations(path, relax_iterations):
-    open(path,"w").writelines( [" ".join([parameter_value_to_string(val) for val in item]) +"\n" for item in relax_iterations])
+    return ener_low, ener_high
 
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--experiment", dest="experiment")
     parser.add_option("--results", dest="results_folder")
     parser.add_option("--workspace", dest="workspace")
+    parser.add_option("--folder", default= "info" ,dest="folder")
     parser.add_option("--plot", action = "store_true", default= False, dest="do_plots")
     
     (options, args) = parser.parse_args()
@@ -113,8 +57,10 @@ if __name__ == '__main__':
     else:
         workspace = os.path.normpath(experiment_details["workspace"])
     
-    # create a place for the results
+    # Create a place for the results
     create_directory(os.path.join(options.results_folder, os.path.basename(workspace)))
+    
+    # Initialize stuff
     all_data = defaultdict(list)
     relax_iterations = []
     acceptances = defaultdict(lambda: defaultdict(list))
@@ -129,72 +75,64 @@ if __name__ == '__main__':
     
     ENERGY_LABEL = "$\Delta$ U"
     RMSD_LABEL = "RMSD"
-    nmd_file_name = {"CC":"normalized_modes.1.nmd", "IC":"normalized_modes_cc.1.nmd"}
+    nmd_file_name = {"CC":"normalized_modes.1.nmd", 
+                     "IC":"normalized_modes_cc.1.nmd"}
+    
     for (p1,v1),(p2,v2) in pair_parameter_values(experiment_details["check"], experiment_details["parameter_values"]):
         folder_name = "%s_%s_%s_%s_%s"%(experiment_details["prefix"],
                                             experiment_details["parameter_abbv"][p1], parameter_value_to_string(v1),
                                             experiment_details["parameter_abbv"][p2], parameter_value_to_string(v2))
         
-        pele_step_time, modes = get_data_from_log(os.path.join(workspace, folder_name, "log.txt"))
-        
-        ## CAUTION: HARDCODED FOLDER ('info'). Must be extracted using the control file
         if experiment_details["prefix"] == "CC":
-            raw_data, min_len = load_cc_data(os.path.join(workspace, folder_name,"info"))
+            raw_data, data_len = load_cc_data(os.path.join(workspace, 
+                                                          folder_name,
+                                                          options.folder),
+                                             full_pele_energy = True,
+                                             skip_first = 50)
         
         if experiment_details["prefix"] == "IC":
-            raw_data, min_len = load_ic_data(os.path.join(workspace, folder_name,"info"))
+            raw_data, data_len = load_ic_data(os.path.join(workspace, 
+                                                          folder_name,
+                                                          options.folder),
+                                             skip_first = 50)
+
+        # Start processing        
+        modes = raw_data["modes"]
+        _mode_frequencies = get_mode_frequencies(modes, 
+                                                os.path.join(workspace, folder_name, "info",
+                                                    nmd_file_name[experiment_details["prefix"]])
+                                                )
         
-        evalues, _, header =  ProdyNMDParser.read(os.path.join(workspace, 
-                                                    folder_name,
-                                                    "info",
-                                                    nmd_file_name[experiment_details["prefix"]]))
-        frequencies = numpy.sqrt(evalues)/ (2*math.pi)
-        mode_to_freq = dict(zip(range(len(frequencies)), frequencies))
+        energy_increments = process_energy_differences(raw_data)
+        rmsd_increments = process_after_perturb_rmsd(raw_data)
+        acc_mean_and_avg = MetropolisMCSimulator(energy_increments).perform_simulation(
+                                                    min(100,len(energy_increments)), 20, 300)
         
-        
-        # skip first frame (usually an outlayer)
-        #print "DBG", min_len-1, len(modes), len(process_modes(experiment_details["prefix"], modes, 10))
-        energy_increments = process_energy_differences(raw_data)[1:]
+        # Fill all data structure
         all_data[ENERGY_LABEL].extend(energy_increments)
-        rmsd_increments = process_after_perturb_rmsd(raw_data)[1:]
         all_data[RMSD_LABEL].extend(rmsd_increments)
-        modes = process_modes(experiment_details["prefix"], modes, 10)[1:min_len]
         all_data["Mode"].extend(modes)
-        all_data["time_per_step"].extend(raw_data["time_per_step"][1:min_len])
-        all_data[p1].extend([v1]*(min_len-1))
-        all_data[p2].extend([v2]*(min_len-1))
+        all_data["time_per_step"].extend(raw_data["time_per_step"])
+        all_data[p1].extend([v1]*data_len)
+        all_data[p2].extend([v2]*data_len)
         
-        mc = MetropolisMCSimulator(energy_increments)
-        acceptances[v1,v2] = mc.perform_simulation(min(100,len(energy_increments)), 20, 300)
+        # Fill the other structures
+        acceptances[v1,v2] = acc_mean_and_avg
+        avg_rmsd[v1,v2] = (numpy.mean(rmsd_increments),
+                           numpy.std(rmsd_increments))
         avg_energy[v1,v2] = numpy.mean(energy_increments)
         std_energy[v1,v2] = numpy.std(energy_increments)
-        avg_rmsd[v1,v2] = (numpy.mean(rmsd_increments),numpy.std(rmsd_increments))
-        avg_time[v1,v2] = (numpy.mean(raw_data["time_per_step"][1:min_len]),
-                           numpy.std(raw_data["time_per_step"][1:min_len]))
+        avg_time[v1,v2] = (numpy.mean(raw_data["time_per_step"]),
+                           numpy.std(raw_data["time_per_step"]))
         norm_rmsd[v1,v2] = numpy.array(rmsd_increments) / numpy.max(rmsd_increments)
         norm_energy[v1,v2] = numpy.array(energy_increments) / numpy.max(numpy.abs(energy_increments))
-        modes_p_v[v1,v2] = numpy.array(modes)+1
-        mode_frequencies[v1,v2] = [mode_to_freq[m] for m in modes]
-
-        ## CAUTION: HARDCODED FILE ('out'). Must be extracted using the control file or experiment
-        if experiment_details["prefix"] == "IC":
-            relax_iters, times_conv = def_get_data_from_output_file(os.path.join(workspace, folder_name, "out"))
-            if times_conv != 0:
-                relax_iterations.append((v1,v2, numpy.mean(relax_iters[1:]), 
-                                     numpy.std(relax_iters[1:]), 
-                                     float(times_conv) / len(relax_iters[1:])))
-    
-    if experiment_details["prefix"] == "IC" and relax_iterations != []:
-        save_relax_iterations(os.path.join(options.results_folder,os.path.basename(workspace),"relax.txt"),
-                              relax_iterations)
+        modes_p_v[v1,v2] = numpy.array(modes)+1 # Modes will start from index 1 in the plots
+        mode_frequencies[v1,v2] = _mode_frequencies
+        
            
     
-    # Find limits for energy (has outliers)
-    ener_low = min(all_data[ENERGY_LABEL])
-    ener_high = max(sorted(all_data[ENERGY_LABEL])[:int(len(all_data[ENERGY_LABEL])*0.98)]) #98% should eliminate outlayers
-    all_data[ENERGY_LABEL] = numpy.array(all_data[ENERGY_LABEL])
-    all_data[ENERGY_LABEL][all_data[ENERGY_LABEL] > ener_high] = ener_high
-    all_data[ENERGY_LABEL] = list(all_data[ENERGY_LABEL])
+    # Remove outliers
+    ener_low, ener_high = remove_energy_outlayers(all_data, ENERGY_LABEL)
     
     # Save all_data in pickled format
     pickle.dump(all_data, open(os.path.join(options.results_folder,os.path.basename(workspace),"all_data.pickle"),"w"))
@@ -439,6 +377,7 @@ if __name__ == '__main__':
             ranked_p = scipy.stats.rankdata(numpy.array(all_data[p]))
             ranked_energies = scipy.stats.rankdata(numpy.array(all_data[ENERGY_LABEL]))
             scaled_ranked_energies = ranked_energies*numpy.max(ranked_p)/numpy.max(ranked_energies)
+            print len(scaled_ranked_norm_energies), len(ranked_p)
             rho, p_val =  scipy.stats.spearmanr(scaled_ranked_norm_energies, ranked_p)
             print "Does the (ANM) Energy increment depend on %s? Association force (rho):"%p,rho,"p-value:",p_val
         

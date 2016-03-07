@@ -13,6 +13,7 @@ def overlap(mode_i, mode_j):
     Tama and Sanejouand 2001. Conformational change of proteins arising from normal mode calculations.
     """
     return numpy.abs(numpy.dot(mode_i, mode_j)) / (tools.norm(mode_i) * tools.norm(mode_j))
+#     return numpy.abs(numpy.dot(mode_i/tools.norm(mode_i), mode_j/tools.norm(mode_j))) / (tools.norm(mode_i) * tools.norm(mode_j))
 
 def cumulative_overlap(mode, mode_range):
     """

@@ -63,32 +63,76 @@ if __name__ == '__main__':
                                                                            len(raw_data["coords_after"][0])/3, 
                                                                            3))
     
+    def calc_distances(in_coords, who_is_accepted):
+        coords = in_coords[who_is_accepted]
+        distances = []
+        for coordset in coords:
+            distances.append(norm(coordset[128]-coordset[18]))
+        return numpy.array(distances)
     
-    coords = initial_coords[who_is_accepted]
-    initial_distances = []
-    for coordset in coords:
-        initial_distances.append(norm(coordset[128]-coordset[18]))
-    initial_distances = numpy.array(initial_distances)
+    initial_distances = calc_distances(initial_coords, who_is_accepted)
+    anm_distances = calc_distances(anm_coords, who_is_accepted) 
+    min_distances = calc_distances(minim_coords, who_is_accepted) 
     
-    coords = anm_coords[who_is_accepted]
-    distances = []
-    for coordset in coords:
-        distances.append(norm(coordset[128]-coordset[18]))
-    anm_distances = initial_distances - numpy.array(distances)
-    plt.plot(anm_distances, label = "after ANM")
-    
-    coords = minim_coords[who_is_accepted]
-    distances = []
-    for coordset in coords:
-        distances.append(norm(coordset[128]-coordset[18]))
-    min_distances = initial_distances - numpy.array(distances)
-    plt.plot( min_distances, label = "after Minim.")
+    anm_increments = initial_distances - anm_distances
+    anm_min_increments = min_distances - anm_distances
+    min_increments = initial_distances - min_distances
+    plt.plot(anm_increments, label = "after ANM")
+    plt.plot(min_increments, label = "after Minim.")
+    plt.plot(anm_min_increments, label = "Minim. - ANM")
     plt.legend()
     plt.savefig(os.path.join(options.results_folder,"domain_distances.svg"))
     plt.close()
     
-    plt.hist(anm_distances, 100, label = "after ANM")
-    plt.hist(min_distances, 100, label = "after Minim.")
+    print "Initial to Anm. negative to positive count ratio:  ",
+    positives = numpy.count_nonzero(anm_increments >= 0.)
+    negatives = len(anm_increments) - positives
+    print float(negatives) / positives
+    
+    print "Initial to min. negative to positive count ratio:  ",
+    positives = numpy.count_nonzero(min_increments >= 0.)
+    negatives = len(min_increments) - positives
+    print float(negatives) / positives
+    
+    print "Anm to min. negative to positive count ratio:  ",
+    positives = numpy.count_nonzero(anm_min_increments >= 0.)
+    negatives = len(anm_min_increments) - positives
+    print float(negatives) / positives
+    
+    print "Initial to Anm. negative to positive sum ratio:  ",
+    positives = numpy.sum(anm_increments[anm_min_increments >= 0.])
+    negatives = numpy.sum(anm_increments[anm_min_increments < 0.])
+    print float(abs(negatives)) / positives
+    
+    print "Initial to min. negative to positive sum ratio:  ",
+    positives = numpy.sum(min_increments[anm_min_increments >= 0.])
+    negatives = numpy.sum(min_increments[anm_min_increments < 0.])
+    print float(abs(negatives)) / positives
+    
+    print "Anm to min. negative to positive sum ratio:  ",
+    positives = numpy.sum(anm_min_increments[anm_min_increments >= 0.])
+    negatives = numpy.sum(anm_min_increments[anm_min_increments < 0.])
+    print float(abs(negatives)) / positives
+    
+    
+#     plt.hist(anm_min_increments, 100, label = "ANM to Min.", alpha = 0.7)
+#     plt.hist(anm_increments, 100, label = "Initial to ANM", alpha = 0.7)
+#     plt.hist(min_increments, 100, label = "Initial to Minim.", alpha = 0.7)
+    # filter between -1 and 1 
+    anm_min_increments = anm_min_increments[anm_min_increments >-1.]
+    anm_min_increments = anm_min_increments[anm_min_increments <1.]
+    sns.kdeplot(anm_min_increments, label = "ANM to Min.", shade=True)
+    anm_increments = anm_increments[anm_increments >-1.]
+    anm_increments = anm_increments[anm_increments <1.]
+    sns.kdeplot(anm_increments, label = "Initial to ANM", shade=True)
+    min_increments = min_increments[min_increments >-1.]
+    min_increments = min_increments[min_increments <1.]
+    sns.kdeplot(min_increments, label = "Initial to Minim.", shade=True)
+    
+    plt.legend()
     plt.show()
+    
+    
+    
     
     

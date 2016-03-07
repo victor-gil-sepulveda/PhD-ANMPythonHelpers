@@ -9,7 +9,7 @@ import numpy
 line_parsers = {
                 "type": lparsers.single_string_parser, # in house tag
                 "mode": lparsers.mode_parser,
-                "coordinates": lparsers.float_array_parser,
+                #"coordinates": lparsers.float_array_parser,
                 "atomnames": lparsers.string_array_parser,
                 "name": lparsers.single_string_parser,
                 "chainids": lparsers.string_array_parser,

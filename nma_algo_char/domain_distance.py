@@ -36,18 +36,19 @@ if __name__ == '__main__':
     else:
         create_directory(options.results)
         
-#     folders = glob.glob("CC_*")
-#     workspaces = ["cc_closed_rmsg_dispf","cc_open_rmsg_dispf"]
-#     workspace_titles = {"cc_closed_rmsg_dispf":"Closed",
-#                         "cc_open_rmsg_dispf":"Open"}
-#     workspace_colors = {"cc_closed_rmsg_dispf":"g",
-#                         "cc_open_rmsg_dispf":"b"}
+    folders = glob.glob("CC_*")
+    workspaces = ["cc_closed_rmsg_dispf","cc_open_rmsg_dispf"]
+    workspace_titles = {"cc_closed_rmsg_dispf":"Closed",
+                        "cc_open_rmsg_dispf":"Open"}
+    workspace_colors = {"cc_closed_rmsg_dispf":"g",
+                        "cc_open_rmsg_dispf":"b"}
+    max_confs = 1500
     
-    folders = glob.glob("IC_*")
-    workspaces = ["ic_open_rmsg_dispf"]
-    workspace_titles = {"ic_open_rmsg_dispf":"Open"}
-    workspace_colors = {"ic_open_rmsg_dispf":"b"}
-    max_confs = 300
+#     folders = glob.glob("IC_*")
+#     workspaces = ["ic_open_rmsg_dispf"]
+#     workspace_titles = {"ic_open_rmsg_dispf":"Open"}
+#     workspace_colors = {"ic_open_rmsg_dispf":"b"}
+#     max_confs = 300
     
     if options.data is None:    
         distances = {}
