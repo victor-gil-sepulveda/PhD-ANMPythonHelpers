@@ -16,14 +16,14 @@ import numpy
 import matplotlib.patches as mpatches
 
 def prepare_subplots(row_len, col_len):
-        if row_len > 1 or col_len > 1:
-            f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
-            f.subplots_adjust(hspace=0.4, wspace=0.3 )
-            f.set_size_inches(12, 12, forward=True)
-        else:
-            f = plt.gcf()
-            axes = {(0,0): plt.gca()}
-        return f, axes
+    if row_len > 1 or col_len > 1:
+        f, axes = plt.subplots( col_len, row_len, sharey='row', sharex='col')
+        f.subplots_adjust(hspace=0.4, wspace=0.3 )
+        f.set_size_inches(12, 12, forward=True)
+    else:
+        f = plt.gcf()
+        axes = {(0,0): plt.gca()}
+    return f, axes
     
 if __name__ == '__main__':
     parser = OptionParser()
