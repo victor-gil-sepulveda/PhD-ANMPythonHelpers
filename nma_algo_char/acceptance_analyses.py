@@ -102,8 +102,8 @@ if __name__ == '__main__':
                 
                 # skip first frame (usually an outlayer)
                 #print "DBG", min_len-1, len(modes), len(process_modes(experiment_details["prefix"], modes, 10))
-                energy_increments = process_energy_differences(raw_data)[1:]
-                rmsd_increments = process_after_perturb_rmsd(raw_data)[1:]
+                energy_increments = process_energy_differences(raw_data)
+                rmsd_increments = process_after_perturb_rmsd(raw_data)
                 
                 mc = MetropolisMCSimulator(energy_increments)
                 acceptances[T][v1,v2] = mc.perform_simulation(min(200,len(energy_increments)), 40, T)

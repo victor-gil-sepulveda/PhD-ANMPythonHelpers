@@ -352,7 +352,7 @@ if __name__ == '__main__':
         else:
             ranked_rmsd *= min_rank /numpy.max(ranked_rmsd)
         rho, p_val =  scipy.stats.spearmanr(ranked_rmsd, ranked_energy)
-        save_result( "Does the RMSD and energy inc. correlate? Association force (rho): %.2f (%.2f)"%(rho,p_val))
+        save_result( "Does the RMSD and energy inc. correlate?\t%.2f\t%.2f"%(rho,p_val))
         
         #---------------------------------------        
         # Displacement (normalized) vs Frequency
@@ -378,7 +378,7 @@ if __name__ == '__main__':
         scaled_ranked_norm_rmsd = ranked_norm_rmsd*10./numpy.max(ranked_norm_rmsd)
         rho, p_val =  scipy.stats.spearmanr(scaled_ranked_norm_rmsd, all_modes)
         # The smaller the p-value is, the better (evidence agains the hypothesis that variables are uncorrelated)
-        save_result(  "Does the (ANM) norm. RMSD depend on the frequency of the mode? Association force (rho): %.3f p-value: %.3f"%(rho,p_val))
+        #save_result(  "Does the (ANM) norm. RMSD depend on the frequency of the mode?\t %.3f\t (%.3f)"%(rho,p_val))
         
         #--------------------------------------------        
         # Energy increment (normalized) vs Frequency
@@ -390,7 +390,7 @@ if __name__ == '__main__':
         ranked_norm_energies =  scipy.stats.rankdata(all_norm_energies)
         scaled_ranked_norm_energies = ranked_norm_energies*10./numpy.max(ranked_norm_energies)
         rho, p_val =  scipy.stats.spearmanr(ranked_norm_energies, all_modes)
-        save_result( "Does the (ANM) norm. energy increment depend on the frequency of the mode? Association force (rho): %.3f p-value: %.3f"%(rho,p_val))
+        #save_result( "Does the (ANM) norm. energy increment depend on the frequency of the mode?\t %.3f\t (%.3f)"%(rho,p_val))
         
         #-----------------------------------------------------------
         # Time per step (cont. dep.) and p1, p2 (cat. ranked ind.)
@@ -402,7 +402,7 @@ if __name__ == '__main__':
             # norm range of time to range of p
             ranked_time *= numpy.max(ranked_p)/numpy.max(ranked_time)
             rho, p_val =  scipy.stats.spearmanr(ranked_time, ranked_p)
-            save_result( "Does the time per (ANM) step depend on %s? Association force (rho): %.3f p-value: %.3f"%(p,rho,p_val))
+            save_result( "Does the time per (ANM) step depend on %s?\t%.3f\t%.3f"%(p,rho,p_val))
         
         
         #-----------------------------------------------------------
@@ -414,7 +414,7 @@ if __name__ == '__main__':
             ranked_rmsd = scipy.stats.rankdata(numpy.array(all_data[RMSD_LABEL]))
             scaled_ranked_rmsd = ranked_rmsd*numpy.max(ranked_p)/numpy.max(ranked_rmsd)
             rho, p_val =  scipy.stats.spearmanr(scaled_ranked_rmsd, ranked_p)
-            save_result( "Does the (ANM) RMSD depend on %s? Association force (rho): %.3f p-value: %.3f"%(p,rho,p_val))
+            save_result( "Does the (ANM) RMSD depend on %s?\t%.3f\t%.3f"%(p,rho,p_val))
         
         #-----------------------------------------------------------
         # Energy increment (cont. dep.) and p1, p2 (cat. ranked ind.)
@@ -424,7 +424,7 @@ if __name__ == '__main__':
             ranked_energies = scipy.stats.rankdata(numpy.array(all_data[ENERGY_LABEL]))
             scaled_ranked_energies = ranked_energies*numpy.max(ranked_p)/numpy.max(ranked_energies)
             rho, p_val =  scipy.stats.spearmanr(scaled_ranked_energies, ranked_p)
-            save_result( "Does the (ANM) Energy increment depend on %s? Association force (rho): %.3f p-value: %.3f"%(p,rho,p_val))
+            save_result( "Does the (ANM) Energy increment depend on %s?\t%.3f\t%.3f"%(p,rho,p_val))
         
         # Energy absolute values
         smaller_than_0 = []

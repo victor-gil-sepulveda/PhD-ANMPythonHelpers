@@ -13,20 +13,7 @@ from nma_algo_char.mode_application_analysis import process_energy_differences
 import seaborn as sns
 import matplotlib.pyplot as plt
 from anmichelpers.tools.tools import norm
-
-def add_coords_data(data, folder, filename, num_procs, min_len):
-    # name = "coords_after_anm"
-    data[filename] = []
-    
-    if num_procs > 1:
-        for i, proc in enumerate(range(1,num_procs)):
-            loaded_data = numpy.delete(numpy.loadtxt(os.path.join(data_folder, "%s.p%d.log"%(filename, proc))),0,1) 
-            data[filename].extend(loaded_data[:min_len[i]]) 
-    else:
-        loaded_data = numpy.delete(numpy.loadtxt(os.path.join(data_folder, "%s.log"%filename )),0,1)
-        data[filename].extend(loaded_data[:min_len])
-    
-    return data
+from nma_algo_char.data_retrieval import add_coords_data
 
 if __name__ == '__main__':
     sns.set_style("whitegrid")
@@ -41,28 +28,42 @@ if __name__ == '__main__':
     create_directory(options.results_folder)
     data_folder = "info"
     if options.num_procs > 1:
-        raw_data, min_len = load_data_from_multiple_processors("CC", options.num_procs, data_folder)
+        raw_data, min_len = load_data_from_multiple_processors("CC", 
+                                                               options.num_procs, 
+                                                               data_folder,
+                                                               skip_first = 0,
+                                                               #max_samples=500,
+                                                               full_pele_energy=True)
     else:
-        raw_data, min_len = load_single_proc_data("CC", data_folder)
-
-    raw_data = add_coords_data(raw_data, data_folder, "after_anm_cc", options.num_procs, min_len)
+        raw_data, min_len = load_single_proc_data("CC", 
+                                                  data_folder,
+                                                  skip_first = 1,
+                                                  #max_samples=500,
+                                                  full_pele_energy=True)
+        
+    raw_data = add_coords_data(raw_data, data_folder, "after_minimization_cc", options.num_procs, min_len)
+    raw_data = add_coords_data(raw_data, data_folder, "proposal_cc", options.num_procs, min_len)
     
-    energy_increments = process_energy_differences(raw_data)[1:]
+    energy_increments = process_energy_differences(raw_data)
     mc = MetropolisMCSimulator(energy_increments)
     who_is_accepted = mc.who_is_accepted(options.temperature)
+#     who_is_accepted = range(len(energy_increments))
     
     initial_coords = numpy.reshape(raw_data["coords_before"], (len(raw_data["coords_before"]), 
-                                                                           len(raw_data["coords_before"][0])/3, 
-                                                                           3))
+                                                               len(raw_data["coords_before"][0])/3, 
+                                                               3))
     
-    anm_coords = numpy.reshape(raw_data["after_anm_cc"], (len(raw_data["after_anm_cc"]), 
-                                                                           len(raw_data["after_anm_cc"][0])/3, 
-                                                                           3))
+    proposal_coords = numpy.reshape(raw_data["proposal_cc"], (len(raw_data["proposal_cc"]), 
+                                                            len(raw_data["proposal_cc"][0])/3, 
+                                                            3))
     
-    minim_coords = numpy.reshape(raw_data["coords_after"], (len(raw_data["coords_after"]), 
-                                                                           len(raw_data["coords_after"][0])/3, 
-                                                                           3))
+    minim_coords = numpy.reshape(raw_data["after_minimization_cc"], (len(raw_data["after_minimization_cc"]), 
+                                                           len(raw_data["after_minimization_cc"][0])/3, 
+                                                           3))
     
+    anm_coords = numpy.reshape(raw_data["coords_after"], (len(raw_data["coords_after"]), 
+                                                           len(raw_data["coords_after"][0])/3, 
+                                                           3))
     def calc_distances(in_coords, who_is_accepted):
         coords = in_coords[who_is_accepted]
         distances = []
@@ -71,60 +72,86 @@ if __name__ == '__main__':
         return numpy.array(distances)
     
     initial_distances = calc_distances(initial_coords, who_is_accepted)
+    proposal_distances = calc_distances(proposal_coords, who_is_accepted)
     anm_distances = calc_distances(anm_coords, who_is_accepted) 
     min_distances = calc_distances(minim_coords, who_is_accepted) 
     
-    anm_increments = initial_distances - anm_distances
+    proposal_increments = proposal_distances - initial_distances 
+    proposal_anm_increments = anm_distances - proposal_distances
+    anm_increments = anm_distances - initial_distances
     anm_min_increments = min_distances - anm_distances
-    min_increments = initial_distances - min_distances
-    plt.plot(anm_increments, label = "after ANM")
-    plt.plot(min_increments, label = "after Minim.")
-    plt.plot(anm_min_increments, label = "Minim. - ANM")
-    plt.legend()
-    plt.savefig(os.path.join(options.results_folder,"domain_distances.svg"))
-    plt.close()
+    min_increments = min_distances - initial_distances
     
-    print "Initial to Anm. negative to positive count ratio:  ",
-    positives = numpy.count_nonzero(anm_increments >= 0.)
-    negatives = len(anm_increments) - positives
-    print float(negatives) / positives
+    print "Initial to Proposal negative to positive count ratio:  "
+    positives = numpy.count_nonzero(proposal_increments > 0.)
+    negatives = numpy.count_nonzero(proposal_increments < 0.)
+    print "+", positives, "-", negatives,  "ratio:", float(negatives) / positives
     
-    print "Initial to min. negative to positive count ratio:  ",
-    positives = numpy.count_nonzero(min_increments >= 0.)
-    negatives = len(min_increments) - positives
-    print float(negatives) / positives
+    print "Proposal to ANM negative to positive count ratio:  "
+    positives = numpy.count_nonzero(proposal_anm_increments > 0.)
+    negatives = numpy.count_nonzero(proposal_anm_increments < 0.)
+    print "+", positives, "-", negatives, "ratio:", float(negatives) / positives
     
-    print "Anm to min. negative to positive count ratio:  ",
-    positives = numpy.count_nonzero(anm_min_increments >= 0.)
-    negatives = len(anm_min_increments) - positives
-    print float(negatives) / positives
+    print "Initial to Anm. negative to positive count ratio:  "
+    positives = numpy.count_nonzero(anm_increments > 0.)
+    negatives = numpy.count_nonzero(anm_increments < 0.)
+    print  "+", positives, "-", negatives, "ratio:", float(negatives) / positives
     
-    print "Initial to Anm. negative to positive sum ratio:  ",
-    positives = numpy.sum(anm_increments[anm_min_increments >= 0.])
-    negatives = numpy.sum(anm_increments[anm_min_increments < 0.])
+    print "Initial to min. negative to positive count ratio:  "
+    positives = numpy.count_nonzero(min_increments > 0.)
+    negatives = numpy.count_nonzero(min_increments < 0.)
+    print  "+", positives, "-", negatives, "ratio:", float(negatives) / positives
+    
+    print "Anm to min. negative to positive count ratio:  "
+    positives = numpy.count_nonzero(anm_min_increments > 0.)
+    negatives = numpy.count_nonzero(anm_min_increments < 0.)
+    print  "+", positives, "-", negatives, "ratio:", float(negatives) / positives
+    
+    print "*****************"
+    print "Initial to Proposal negative to positive sum ratio:\t",
+    positives = numpy.sum(proposal_increments[proposal_increments > 0.])
+    negatives = numpy.sum(proposal_increments[proposal_increments < 0.])
     print float(abs(negatives)) / positives
     
-    print "Initial to min. negative to positive sum ratio:  ",
-    positives = numpy.sum(min_increments[anm_min_increments >= 0.])
-    negatives = numpy.sum(min_increments[anm_min_increments < 0.])
+    print "Proposal to Anm negative to positive sum ratio:\t",
+    positives = numpy.sum(proposal_anm_increments[proposal_anm_increments > 0.])
+    negatives = numpy.sum(proposal_anm_increments[proposal_anm_increments < 0.])
     print float(abs(negatives)) / positives
     
-    print "Anm to min. negative to positive sum ratio:  ",
-    positives = numpy.sum(anm_min_increments[anm_min_increments >= 0.])
+    print "Initial to Anm negative to positive sum ratio:\t",
+    positives = numpy.sum(anm_increments[anm_increments > 0.])
+    negatives = numpy.sum(anm_increments[anm_increments < 0.])
+    print float(abs(negatives)) / positives
+    
+    print "Initial to min. negative to positive sum ratio:\t",
+    positives = numpy.sum(min_increments[min_increments > 0.])
+    negatives = numpy.sum(min_increments[min_increments < 0.])
+    print float(abs(negatives)) / positives
+    
+    print "Anm to min. negative to positive sum ratio:\t",
+    positives = numpy.sum(anm_min_increments[anm_min_increments > 0.])
     negatives = numpy.sum(anm_min_increments[anm_min_increments < 0.])
     print float(abs(negatives)) / positives
     
     
-#     plt.hist(anm_min_increments, 100, label = "ANM to Min.", alpha = 0.7)
-#     plt.hist(anm_increments, 100, label = "Initial to ANM", alpha = 0.7)
-#     plt.hist(min_increments, 100, label = "Initial to Minim.", alpha = 0.7)
     # filter between -1 and 1 
+    
+    proposal_increments = proposal_increments[proposal_increments >-1.]
+    proposal_increments = proposal_increments[proposal_increments <1.]
+    sns.kdeplot(proposal_increments, label = "Intial to proposal", shade=True)
+    
+    proposal_anm_increments = proposal_anm_increments[proposal_anm_increments >-1.]
+    proposal_anm_increments = proposal_anm_increments[proposal_anm_increments <1.]
+    sns.kdeplot(proposal_anm_increments, label = "Proposal to ANM", shade=True)
+    
     anm_min_increments = anm_min_increments[anm_min_increments >-1.]
     anm_min_increments = anm_min_increments[anm_min_increments <1.]
     sns.kdeplot(anm_min_increments, label = "ANM to Min.", shade=True)
+    
     anm_increments = anm_increments[anm_increments >-1.]
     anm_increments = anm_increments[anm_increments <1.]
     sns.kdeplot(anm_increments, label = "Initial to ANM", shade=True)
+    
     min_increments = min_increments[min_increments >-1.]
     min_increments = min_increments[min_increments <1.]
     sns.kdeplot(min_increments, label = "Initial to Minim.", shade=True)
